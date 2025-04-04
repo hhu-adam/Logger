@@ -1,2 +1,2 @@
 ## Logger
-Skript for measuuring and translating anonymized IPs into countries for usage statistics.
+Skript for measuring and translating anonymized IPs into countries for usage statistics.

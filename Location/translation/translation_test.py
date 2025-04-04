@@ -1,5 +1,4 @@
 import unittest
-from unittest.mock import Mock, patch
 import pandas
 import os
 from translation import update_usage_statistics, write_translation_log

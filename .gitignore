@@ -1,3 +1,4 @@
+env/
 **.log
 **.info
 **/__pycache__/

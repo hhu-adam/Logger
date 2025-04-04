@@ -18,8 +18,8 @@ IPS_DOCUMENTED = relative_path('Location/logs/ip_access_meas.log')
 @repeat(every(10).minutes)
 def measuring_job():
     print("Start: Measuring")
-    ips_measured = '/home/adam/lean4game/logs/game-access.log'
-    update_measurements(IPS_DOCUMENTED, ips_measured)
+    ips_measured_path = os.environ.get("IPS_LOG")
+    update_measurements(IPS_DOCUMENTED, ips_measured_path)
 
 
 @repeat(every().day.at("00:00"))

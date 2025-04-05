@@ -25,7 +25,8 @@ def measuring_job():
 @repeat(every().day.at("00:00"))
 def translating_job():
     print("Start: Translating")
-    ips_translated = relative_path(f"logs/locations-{datetime.today().strftime('%Y-%m-%d')}.log")
+    ips_translated = relative_path(
+        f"Location/logs/locations-{datetime.today().strftime('%Y-%m-%d')}.log")
     create_translation(IPS_DOCUMENTED, ips_translated)
 
 

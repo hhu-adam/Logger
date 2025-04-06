@@ -1,9 +1,10 @@
+import sys
 import time
 import os
 from datetime import datetime
 from schedule import every, repeat, run_pending
 from Location.measurement.measurement import update_measurements
-from Location.translation.translation import create_translation
+from Location.translation.translation import create_translation, clear_daily_measurements
 
 
 def relative_path(rel_path: str) -> str:
@@ -25,9 +26,20 @@ def measuring_job():
 @repeat(every().day.at("00:00"))
 def translating_job():
     print("Start: Translating")
+    translated = False
     ips_translated = relative_path(
         f"Location/logs/locations-{datetime.today().strftime('%Y-%m-%d')}.log")
-    create_translation(IPS_DOCUMENTED, ips_translated)
+    try:
+        create_translation(IPS_DOCUMENTED, ips_translated)
+        translated = True
+    except FileNotFoundError as e:
+        print(
+            f"Exception during translation: {e}", file=sys.stderr)
+    except Exception as e:
+        print(f"Undefined exception during translation: {e}", file=sys.stderr)
+
+    if translated:
+        clear_daily_measurements(IPS_DOCUMENTED)
 
 
 while True:

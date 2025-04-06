@@ -100,14 +100,15 @@ def extract_usage_statistics(m_df: pandas.DataFrame, cache: dict[str, str]) -> p
 
 def create_translation(ips_documented: str, path_translated_ips: str) -> None:
     if not os.path.exists(ips_documented):
-        print("No measurements available to translate!", file=sys.stderr)
-        return
+        raise FileNotFoundError("No measurements available to translate!")
 
     cache = {}
     ip_df = pandas.read_csv(ips_documented, delimiter=';', index_col=False)
     write_translation_log(ip_df, path_translated_ips, cache)
-    print("Measurements translated.")
+    print(f"Measurements translated into: {path_translated_ips}")
 
-    f = open(ips_documented, 'r+')
+
+def clear_daily_measurements(ips_documented: str) -> None:
+    f = open(ips_documented, 'r+', encoding="utf_8")
     f.truncate(0)
-    print("Daily measurements cleared.")
+    print(f"Daily measurements cleared in: {ips_documented}")

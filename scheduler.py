@@ -1,7 +1,7 @@
 import sys
 import time
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 from schedule import every, repeat, run_pending
 from Location.measurement.measurement import update_measurements
 from Location.translation.translation import create_translation, clear_daily_measurements
@@ -27,8 +27,9 @@ def measuring_job():
 def translating_job():
     print("Start: Translating")
     translated = False
+    log_date = datetime.today() - timedelta(days=1)
     ips_translated = relative_path(
-        f"Location/logs/locations-{datetime.today().strftime('%Y-%m-%d')}.log")
+        f"Location/logs/locations-{log_date.strftime('%Y-%m-%d')}.log")
     try:
         create_translation(IPS_DOCUMENTED, ips_translated)
         translated = True

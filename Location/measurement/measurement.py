@@ -9,22 +9,22 @@ Values for n (number of measurement occurances) is
 initialized to 1. 
 Finally write aggregated results to .csv file.
 """
+
 HOME_PAGE_GAMES = ['leanprover-community/nng4',
                    'hhu-adam/robo',
                    'djvelleman/stg4',
                    'trequetrum/lean4game-logic',
                    'jadabouhawili/knightsandknaves-lean4game']
-
+MEASUREMENT_COLUMNS = ['date', 'anon-ip', 'game','lang']
+DOCUMENTED_COLUMNS = ['anon-ip', 'game', 'n']
 
 def update_n(old_df: pandas.DataFrame, new_df: pandas.DataFrame) -> pandas.DataFrame:
     """
     Update n values by joining dataframes wrt. ip and game and
     adding up n values of respected tables.
     """
-    assert list(old_df.columns) == [
-        'anon-ip', 'game', 'n'], f"Columns  of doc. DataFrame must be {['anon-ip', 'game', 'n']} but were {old_df.columns}"
-    assert list(new_df.columns) == [
-        'anon-ip', 'game', 'n'], f"Columns  of new DataFrame must be {['anon-ip', 'game', 'n']} but were {new_df.columns}"
+    assert list(old_df.columns) == DOCUMENTED_COLUMNS, f"Columns  of doc. DataFrame must be {DOCUMENTED_COLUMNS} but were {old_df.columns}"
+    assert list(new_df.columns) == DOCUMENTED_COLUMNS, f"Columns  of new DataFrame must be {DOCUMENTED_COLUMNS} but were {new_df.columns}"
 
     # Replace NaN values with zero.
     old_df = old_df.merge(new_df, how="outer", on=[
@@ -37,15 +37,13 @@ def update_n(old_df: pandas.DataFrame, new_df: pandas.DataFrame) -> pandas.DataF
 
 
 def standardize_to_lower_case_game(df: pandas.DataFrame) -> pandas.DataFrame:
-    assert list(df.columns) == ['date', 'anon-ip', 'game',
-                                'lang'], f"Columns  of DataFrame must be {['date','anon-ip', 'game', 'lang']} but were {df.columns}"
+    assert list(df.columns) == MEASUREMENT_COLUMNS, f"Columns  of DataFrame must be {MEASUREMENT_COLUMNS} but were {df.columns}"
     df['game'] = df['game'].apply(lambda game: game.lower())
     return df
 
 
 def filter_home_page_accesses(df: pandas.DataFrame) -> pandas.DataFrame:
-    assert list(df.columns) == ['date', 'anon-ip', 'game',
-                                'lang'], f"Columns  of DataFrame must be {['date','anon-ip', 'game', 'lang']} but were {df.columns}"
+    assert list(df.columns) == MEASUREMENT_COLUMNS, f"Columns  of DataFrame must be {MEASUREMENT_COLUMNS} but were {df.columns}"
     unique = pandas.DataFrame(df.drop_duplicates())
     unique['count'] = unique.groupby(
         ['date', 'anon-ip', 'lang']).transform('count')
@@ -60,14 +58,13 @@ def filter_home_page_accesses(df: pandas.DataFrame) -> pandas.DataFrame:
         # Here an "anti join" is performed.
         # 1. Perform an outer join between the homepage access and the original measurement dataframe.
         home_page_access = home_page_access.astype(object)
-        outer_join = df.merge(home_page_access, how='outer', on=[
-                              'date', 'anon-ip', 'game', 'lang'], indicator=True)
+        outer_join = df.merge(home_page_access, how='outer', on=MEASUREMENT_COLUMNS, indicator=True)
         # 2. Disqualify every row with indicator "both" from the outer join and remove columns added in previous step.
         anti_join = outer_join[~(outer_join._merge == 'both')].drop(
             ['_merge', 'count', 'index'], axis=1).reset_index()
         return anti_join
 
-    return df[['date', 'anon-ip', 'game', 'lang']]
+    return df[MEASUREMENT_COLUMNS]
 
 
 def aggregate_measurements(df: pandas.DataFrame) -> pandas.DataFrame:

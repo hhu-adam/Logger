@@ -1,4 +1,6 @@
+import requests
 import pandas
+import json
 import os
 import sys
 
@@ -10,6 +12,7 @@ initialized to 1.
 Finally write aggregated results to .csv file.
 """
 
+API = "http://localhost:8010/api/game-sessions/"
 HOME_PAGE_GAMES = ['leanprover-community/nng4',
                    'hhu-adam/robo',
                    'djvelleman/stg4',
@@ -73,7 +76,7 @@ def aggregate_measurements(df: pandas.DataFrame) -> pandas.DataFrame:
     and adding measurement count n.
     """
     df = standardize_to_lower_case_game(df)
-    df = filter_home_page_accesses(df)
+    # df = filter_home_page_accesses(df)
     return df.groupby(
         ['anon-ip', 'game']).agg(
         n=pandas.NamedAgg(column='game', aggfunc='size')).reset_index()
@@ -86,14 +89,24 @@ def is_measurement_doc_empty(doc_measurements_path: str):
     return os.stat(doc_measurements_path).st_size == 0
 
 
-def measure_access(doc_measurements_path: str, new_measurements_path) -> pandas.DataFrame:
+def measure_access(doc_measurements_path: str) -> pandas.DataFrame:
     """
     Either write create aggregated measurements DataFrame because of empty documentation file
     or update existing measurements DataFrame by new ones.
     """
 
-    new_df = pandas.read_csv(new_measurements_path,
-                             delimiter=";", index_col=False)
+    response = requests.get(API, timeout=2000)
+    if response.status_code != 200:
+        print('API call for open game sessions failed.', file=sys.stderr)
+        return
+    
+    measurement: dict = response.json()
+    # adjust column name from 'anon_Ip' to 'anon-ip'
+    assert 'anon_Ip' in measurement.keys(), "There is no key anon_Ip in the measurement!"
+    measurement['anon-ip'] = measurement.pop('anon_Ip')
+    
+    # Adjust order of columns after creating DataFrame from dict
+    new_df = pandas.DataFrame.from_dict(measurement)[['date', 'anon-ip', 'game', 'lang']]
     new_df = aggregate_measurements(new_df)
 
     if is_measurement_doc_empty(doc_measurements_path):
@@ -105,14 +118,8 @@ def measure_access(doc_measurements_path: str, new_measurements_path) -> pandas.
     return update_n(doc_df, new_df).sort_values('n', ascending=False).reset_index(drop=True).astype({'n': 'int64'})
 
 
-def update_measurements(ips_documented: str, ips_measured: str) -> None:
-    # Check if access have been measured by Lean4Game
-    if not os.path.exists(ips_measured):
-        print('No access to games recorded.', file=sys.stderr)
-        return
-
-    print(f"Starting measuring source:  {ips_measured}")
-    cur_measurement_df = measure_access(ips_documented, ips_measured)
+def update_measurements(ips_documented: str) -> None:
+    print("Starting measuring open game sessions.")
+    cur_measurement_df = measure_access(ips_documented)
     cur_measurement_df.to_csv(ips_documented, sep=';', index=False)
-    os.remove(ips_measured)
-    print(f"Cleared source: {ips_measured}")
+    print("Updated game session log.")

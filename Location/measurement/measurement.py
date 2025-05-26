@@ -12,7 +12,7 @@ initialized to 1.
 Finally write aggregated results to .csv file.
 """
 
-API = "http://localhost:8010/api/game-sessions/"
+API = os.environ.get("API")
 HOME_PAGE_GAMES = ['leanprover-community/nng4',
                    'hhu-adam/robo',
                    'djvelleman/stg4',

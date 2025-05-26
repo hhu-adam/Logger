@@ -4,7 +4,8 @@ module.exports = {
     script : "./scheduler.py", 
     interpreter : "./env/bin/python3",
     env: {
-        IPS_LOG: ""
+        IPS_LOG: "",
+        API: ""
     }
   }]
 }

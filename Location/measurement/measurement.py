@@ -89,18 +89,25 @@ def is_measurement_doc_empty(doc_measurements_path: str):
     return os.stat(doc_measurements_path).st_size == 0
 
 
-def measure_access(doc_measurements_path: str) -> pandas.DataFrame:
+def get_measurement() -> dict:
     """
-    Either write create aggregated measurements DataFrame because of empty documentation file
-    or update existing measurements DataFrame by new ones.
+    Calls API to receive information about current game
+    session measurements
     """
-
     response = requests.get(API, timeout=2000)
     if response.status_code != 200:
         print('API call for open game sessions failed.', file=sys.stderr)
         return
     
-    measurement: dict = response.json()
+    return response.json()
+
+
+def measure_access(doc_measurements_path: str) -> pandas.DataFrame:
+    """
+    Either write create aggregated measurements DataFrame because of empty documentation file
+    or update existing measurements DataFrame by new ones.
+    """
+    measurement = get_measurement()
     # adjust column name from 'anon_Ip' to 'anon-ip'
     assert 'anon_Ip' in measurement.keys(), "There is no key anon_Ip in the measurement!"
     measurement['anon-ip'] = measurement.pop('anon_Ip')

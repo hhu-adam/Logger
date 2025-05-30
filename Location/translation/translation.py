@@ -112,3 +112,8 @@ def clear_daily_measurements(ips_documented: str) -> None:
     f = open(ips_documented, 'r+', encoding="utf_8")
     f.truncate(0)
     print(f"Daily measurements cleared in: {ips_documented}")
+
+if __name__ == "__main__":
+    measurements = sys.argv[1]
+    translation_path = sys.argv[2]
+    create_translation(measurements, translation_path)

@@ -1,9 +1,11 @@
-import unittest
+import json
+from unittest import TestCase, main
+from unittest.mock import patch
 import pandas
 from measurement import aggregate_measurements, update_n, measure_access
 
 
-class TestMeasurement(unittest.TestCase):
+class TestMeasurement(TestCase):
 
     def __init__(self, methodName="runTest"):
         super().__init__(methodName)
@@ -17,46 +19,70 @@ class TestMeasurement(unittest.TestCase):
         self.expected_initialized_documentation = "./test_files/exp_empty_doc_new.csv"
         self.expected_initialized_documentation_without_home_page_access = "./test_files/exp_empty_doc_new_with_home_page_access_non_shuffled.csv"
 
-    def test_measuring_access_with_empty_documented_measurements(self):
+    @patch('measurement.get_measurement')
+    def test_measuring_access_with_empty_documented_measurements(self, mock_get_measurement):
         exp_df = pandas.read_csv(
             self.expected_initialized_documentation, delimiter=';', index_col=False)
-        res_df = measure_access(
-            self.empty_documented_measurements, self.new_measurement)
+        
+        mock_data = json.loads(pandas.read_csv(self.new_measurement, delimiter=';').to_json())
+        mock_get_measurement.return_value = mock_data
+
+        res_df = measure_access(self.empty_documented_measurements)
         self.assertTrue(exp_df.equals(res_df))
 
-    def test_measuring_access_with_empty_documented_measurements_with_home_page_access_non_shuffled(self):
+    @patch('measurement.get_measurement')
+    def test_measuring_access_with_empty_documented_measurements_with_home_page_access_non_shuffled(self, mock_get_measurement):
         exp_df = pandas.read_csv(
             self.expected_initialized_documentation_without_home_page_access, delimiter=';', index_col=False)
-        res_df = measure_access(self.empty_documented_measurements,
-                                self.new_measurement_with_home_page_access_non_shuffled)
+        
+        mock_data = json.loads(pandas.read_csv(self.new_measurement_with_home_page_access_non_shuffled, delimiter=';').to_json())
+        mock_get_measurement.return_value = mock_data
+        
+        res_df = measure_access(self.empty_documented_measurements)
         self.assertTrue(exp_df.equals(res_df))
 
-    def test_measuring_access_with_empty_documented_measurements_with_home_page_access_shuffled(self):
+    @patch('measurement.get_measurement')
+    def test_measuring_access_with_empty_documented_measurements_with_home_page_access_shuffled(self, mock_get_measurement):
         exp_df = pandas.read_csv(
             self.expected_initialized_documentation_without_home_page_access, delimiter=';', index_col=False)
-        res_df = measure_access(self.empty_documented_measurements,
-                                self.new_measurement_with_home_page_access_shuffled)
+        
+        mock_data = json.loads(pandas.read_csv(self.new_measurement_with_home_page_access_shuffled, delimiter=';').to_json())
+        mock_get_measurement.return_value = mock_data
+
+        res_df = measure_access(self.empty_documented_measurements)
         self.assertTrue(exp_df.equals(res_df))
 
-    def test_updating_already_existing_documentation(self):
+    @patch('measurement.get_measurement')
+    def test_updating_already_existing_documentation(self, mock_get_measurement):
         exp_df = pandas.read_csv(
             self.expected_updated_documentation, delimiter=';', index_col=False)
-        res_df = measure_access(
-            self.documented_measurements, self.new_measurement)
+        
+        mock_data = json.loads(pandas.read_csv(self.new_measurement, delimiter=';').to_json())
+        mock_get_measurement.return_value = mock_data
+
+        res_df = measure_access(self.documented_measurements)
         self.assertTrue(exp_df.equals(res_df))
 
-    def test_updating_already_existing_documentation_with_home_page_access_shuffled(self):
+    @patch('measurement.get_measurement')
+    def test_updating_already_existing_documentation_with_home_page_access_shuffled(self, mock_get_measurement):
         exp_df = pandas.read_csv(
             self.expected_updated_documentation_without_home_page_access, delimiter=';', index_col=False)
-        res_df = measure_access(self.documented_measurements,
-                                self.new_measurement_with_home_page_access_shuffled)
+        
+        mock_data = json.loads(pandas.read_csv(self.new_measurement_with_home_page_access_shuffled, delimiter=';').to_json())
+        mock_get_measurement.return_value = mock_data
+
+        res_df = measure_access(self.documented_measurements)
         self.assertTrue(exp_df.equals(res_df))
 
-    def test_updating_already_existing_documentation_with_home_page_access_non_shuffled(self):
+    @patch('measurement.get_measurement')
+    def test_updating_already_existing_documentation_with_home_page_access_non_shuffled(self, mock_get_measurement):
         exp_df = pandas.read_csv(
             self.expected_updated_documentation_without_home_page_access, delimiter=';', index_col=False)
-        res_df = measure_access(self.documented_measurements,
-                                self.new_measurement_with_home_page_access_non_shuffled)
+        
+        mock_data = json.loads(pandas.read_csv(self.new_measurement_with_home_page_access_non_shuffled, delimiter=';').to_json())
+        mock_get_measurement.return_value = mock_data
+
+        res_df = measure_access(self.documented_measurements)
         self.assertTrue(exp_df.equals(res_df))
 
     def test_with_two_players_accessing_two_games(self):
@@ -366,4 +392,4 @@ class TestMeasurement(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    unittest.main()
+    main()

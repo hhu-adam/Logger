@@ -95,7 +95,6 @@ def get_measurement() -> dict:
     Calls API to receive information about current game
     session measurements
     """
-    datatype_map = {'anon-ip': 'object','game': 'object','n': 'int64'}
     response = requests.get(API, timeout=2000)
     if response.status_code != 200:
         print('API call for open game sessions failed.', file=sys.stderr)
@@ -109,6 +108,7 @@ def measure_access(doc_measurements_path: str) -> pandas.DataFrame:
     Either write create aggregated measurements DataFrame because of empty documentation file
     or update existing measurements DataFrame by new ones.
     """
+    datatype_map = {'anon-ip': 'object','game': 'object','n': 'int64'}
     measurement = get_measurement()
     # adjust column name from 'anon_Ip' to 'anon-ip'
     assert 'anon_Ip' in measurement.keys(), "There is no key anon_Ip in the measurement!"

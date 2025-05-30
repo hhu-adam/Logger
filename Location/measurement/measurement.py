@@ -95,7 +95,7 @@ def measure_access(doc_measurements_path: str) -> pandas.DataFrame:
     Either write create aggregated measurements DataFrame because of empty documentation file
     or update existing measurements DataFrame by new ones.
     """
-
+    datatype_map = {'anon-ip': 'object','game': 'object','n': 'int64'}
     response = requests.get(API, timeout=2000)
     if response.status_code != 200:
         print('API call for open game sessions failed.', file=sys.stderr)
@@ -108,13 +108,13 @@ def measure_access(doc_measurements_path: str) -> pandas.DataFrame:
     
     # Adjust order of columns after creating DataFrame from dict
     new_df = pandas.DataFrame.from_dict(measurement)[['date', 'anon-ip', 'game', 'lang']]
-    new_df = aggregate_measurements(new_df)
+    
+    new_df = aggregate_measurements(new_df).astype(datatype_map)
 
     if is_measurement_doc_empty(doc_measurements_path):
-        return new_df.sort_values(['n', 'game'], ascending=False).reset_index(drop=True)
+        return new_df.sort_values(['n', 'game'], ascending=False).reset_index(drop=True).astype(datatype_map)
 
-    doc_df = pandas.read_csv(doc_measurements_path,
-                             delimiter=";", index_col=False)
+    doc_df = pandas.read_csv(doc_measurements_path, delimiter=";", index_col=False).astype(datatype_map)
 
     return update_n(doc_df, new_df).sort_values('n', ascending=False).reset_index(drop=True).astype({'n': 'int64'})
 

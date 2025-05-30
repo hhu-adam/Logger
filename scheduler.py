@@ -27,10 +27,10 @@ def translating_job():
     print("Start: Translating")
     translated = False
     log_date = datetime.today() - timedelta(days=1)
-    ips_translated = relative_path(
+    translation_path = relative_path(
         f"Location/logs/locations-{log_date.strftime('%Y-%m-%d')}.log")
     try:
-        create_translation(IPS_DOCUMENTED, ips_translated)
+        create_translation(IPS_DOCUMENTED, translation_path)
         translated = True
     except FileNotFoundError as e:
         print(

@@ -114,6 +114,12 @@ def clear_daily_measurements(ips_documented: str) -> None:
     print(f"Daily measurements cleared in: {ips_documented}")
 
 if __name__ == "__main__":
+    """
+    This script is meant to be executed by a scheduler.
+    The entry point defined here was made for debug purposes
+    to verify that translations are performed correctly.
+    """
+    
     measurements = sys.argv[1]
     translation_path = sys.argv[2]
     create_translation(measurements, translation_path)

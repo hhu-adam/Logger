@@ -28,7 +28,8 @@ def update_n(old_df: pandas.DataFrame, new_df: pandas.DataFrame) -> pandas.DataF
     """
     assert list(old_df.columns) == DOCUMENTED_COLUMNS, f"Columns  of doc. DataFrame must be {DOCUMENTED_COLUMNS} but were {old_df.columns}"
     assert list(new_df.columns) == DOCUMENTED_COLUMNS, f"Columns  of new DataFrame must be {DOCUMENTED_COLUMNS} but were {new_df.columns}"
-
+    assert list(old_df.dtypes) == list(new_df.dtypes), f"Datatypes of DataFrames have to be identical but were {list(old_df.dtypes)} and {list(new_df.dtypes)}"
+    
     # Replace NaN values with zero.
     old_df = old_df.merge(new_df, how="outer", on=[
                           'anon-ip', 'game'], suffixes=['_documented', '_measured']).fillna(0)

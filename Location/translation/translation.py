@@ -1,4 +1,5 @@
 import requests
+import datetime
 import pandas
 import sys
 import os
@@ -78,7 +79,11 @@ def write_translation_log(ip_df: pandas.DataFrame, log_path: str, cache: dict[st
         df = extract_usage_statistics(ip_df, cache)
         df.to_csv(log_path, sep=';', index=False)
     else:
-        t_df = pandas.read_csv(log_path, delimiter=';', index_col=False)
+        try:
+            t_df = pandas.read_csv(log_path, delimiter=';', index_col=False)
+        except Exception:
+            t_df = pandas.DataFrame({"country": [], "game": [], "n": []})
+            
         updated_df = update_usage_statistics(ip_df, t_df, cache)
         updated_df.to_csv(log_path, sep=';', index=False)
 
@@ -98,20 +103,21 @@ def extract_usage_statistics(m_df: pandas.DataFrame, cache: dict[str, str]) -> p
     return _sort_by_n(new_t_df)
 
 
-def create_translation(ips_documented: str, path_translated_ips: str) -> None:
-    if not os.path.exists(ips_documented):
-        raise FileNotFoundError("No measurements available to translate!")
+def create_translation(doc_df: pandas.DataFrame, path_translated_ips: str) -> None:
+    # if not os.path.exists(doc_df):
+    #    raise FileNotFoundError("No measurements available to translate!")
 
     cache = {}
-    ip_df = pandas.read_csv(ips_documented, delimiter=';', index_col=False)
-    write_translation_log(ip_df, path_translated_ips, cache)
-    print(f"Measurements translated into: {path_translated_ips}")
+    # ip_df = pandas.read_csv(doc_df, delimiter=';', index_col=False)
+    write_translation_log(doc_df, path_translated_ips, cache)
+    print(f"[{datetime.datetime.now()}] Measurements translated into: {path_translated_ips}")
 
 
-def clear_daily_measurements(ips_documented: str) -> None:
-    f = open(ips_documented, 'r+', encoding="utf_8")
-    f.truncate(0)
-    print(f"Daily measurements cleared in: {ips_documented}")
+def clear_daily_measurements(doc_df: pandas.DataFrame) -> None:
+    # f = open(ips_documented, 'r+', encoding="utf_8")
+    # f.truncate(0)
+    doc_df.drop(doc_df.index, inplace=True)
+    print(f"[{datetime.datetime.now()}] Daily measurements cleared from DataFrame: {doc_df}")
 
 if __name__ == "__main__":
     """

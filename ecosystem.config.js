@@ -1,11 +1,13 @@
 module.exports = {
   apps : [{
-    name   : "Logger",
+    name   : "logger",
     script : "./scheduler.py", 
     interpreter : "./env/bin/python3",
     env: {
         IPS_LOG: "",
-        API: ""
+        API: "",
+        MEASUREMENT_INTERVAL_MIN: 0,
+        TRANSLATION_TIME: ""
     }
   }]
 }

@@ -19,15 +19,13 @@ daily_log: pandas.DataFrame = pandas.DataFrame({"anon-ip": [], "game": [], "n": 
 MEASURING_INTERVAL: int = int(os.getenv("MEASUREMENT_INTERVAL_MIN"))
 TRANSLATION_TIME: str = os.getenv("TRANSLATION_TIME")
 
-# @repeat(every(MEASURING_INTERVAL).minutes)
-@repeat(every(MEASURING_INTERVAL).seconds)
+@repeat(every(MEASURING_INTERVAL).minutes)
 def measuring_job():
     global daily_log
     daily_log = update_measurements(daily_log)
 
 
-# @repeat(every().day.at(TRANSLATION_TIME))
-@repeat(every(MEASURING_INTERVAL + 20).seconds)
+@repeat(every().day.at(TRANSLATION_TIME))
 def translating_job():
     global daily_log
     print("Start: Translating")

@@ -9,8 +9,8 @@ class TestMeasurement(TestCase):
 
     def __init__(self, methodName="runTest"):
         super().__init__(methodName)
-        self.documented_measurements = "./test_files/doc_meas.csv"
-        self.empty_documented_measurements = "./test_files/new_doc.csv"
+        self.doc_df = pandas.read_csv("./test_files/doc_meas.csv", delimiter=';', index_col=False)
+        self.empty_doc_df = pandas.DataFrame({"anon-ip": [], "game": [], "n": []})
         self.new_measurement = "./test_files/new_meas.csv"
         self.new_measurement_with_home_page_access_non_shuffled = "./test_files/new_meas_with_home_page_access_non_shuffled.csv"
         self.new_measurement_with_home_page_access_shuffled = "./test_files/new_meas_with_home_page_access_shuffled.csv"
@@ -27,7 +27,7 @@ class TestMeasurement(TestCase):
         mock_data = json.loads(pandas.read_csv(self.new_measurement, delimiter=';').to_json())
         mock_get_measurement.return_value = mock_data
 
-        res_df = measure_access(self.empty_documented_measurements)
+        res_df = measure_access(self.empty_doc_df)
         self.assertTrue(exp_df.equals(res_df))
 
     @patch('measurement.get_measurement')
@@ -37,8 +37,8 @@ class TestMeasurement(TestCase):
         
         mock_data = json.loads(pandas.read_csv(self.new_measurement_with_home_page_access_non_shuffled, delimiter=';').to_json())
         mock_get_measurement.return_value = mock_data
-        
-        res_df = measure_access(self.empty_documented_measurements)
+
+        res_df = measure_access(self.empty_doc_df)
         self.assertTrue(exp_df.equals(res_df))
 
     @patch('measurement.get_measurement')
@@ -49,7 +49,7 @@ class TestMeasurement(TestCase):
         mock_data = json.loads(pandas.read_csv(self.new_measurement_with_home_page_access_shuffled, delimiter=';').to_json())
         mock_get_measurement.return_value = mock_data
 
-        res_df = measure_access(self.empty_documented_measurements)
+        res_df = measure_access(self.empty_doc_df)
         self.assertTrue(exp_df.equals(res_df))
 
     @patch('measurement.get_measurement')
@@ -60,7 +60,7 @@ class TestMeasurement(TestCase):
         mock_data = json.loads(pandas.read_csv(self.new_measurement, delimiter=';').to_json())
         mock_get_measurement.return_value = mock_data
 
-        res_df = measure_access(self.documented_measurements)
+        res_df = measure_access(self.doc_df)
         self.assertTrue(exp_df.equals(res_df))
 
     @patch('measurement.get_measurement')
@@ -71,7 +71,7 @@ class TestMeasurement(TestCase):
         mock_data = json.loads(pandas.read_csv(self.new_measurement_with_home_page_access_shuffled, delimiter=';').to_json())
         mock_get_measurement.return_value = mock_data
 
-        res_df = measure_access(self.documented_measurements)
+        res_df = measure_access(self.doc_df)
         self.assertTrue(exp_df.equals(res_df))
 
     @patch('measurement.get_measurement')
@@ -82,7 +82,7 @@ class TestMeasurement(TestCase):
         mock_data = json.loads(pandas.read_csv(self.new_measurement_with_home_page_access_non_shuffled, delimiter=';').to_json())
         mock_get_measurement.return_value = mock_data
 
-        res_df = measure_access(self.documented_measurements)
+        res_df = measure_access(self.doc_df)
         self.assertTrue(exp_df.equals(res_df))
 
     def test_with_two_players_accessing_two_games(self):

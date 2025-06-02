@@ -1,6 +1,7 @@
 import requests
 import pandas
 import json
+import datetime
 import os
 import sys
 
@@ -77,7 +78,7 @@ def aggregate_measurements(df: pandas.DataFrame) -> pandas.DataFrame:
     and adding measurement count n.
     """
     df = standardize_to_lower_case_game(df)
-    # df = filter_home_page_accesses(df)
+    df = filter_home_page_accesses(df)
     return df.groupby(
         ['anon-ip', 'game']).agg(
         n=pandas.NamedAgg(column='game', aggfunc='size')).reset_index()
@@ -95,6 +96,9 @@ def get_measurement() -> dict:
     Calls API to receive information about current game
     session measurements
     """
+
+    assert len(API) != 0, "API string is empty!"
+
     response = requests.get(API, timeout=2000)
     if response.status_code != 200:
         print('API call for open game sessions failed.', file=sys.stderr)
@@ -103,7 +107,7 @@ def get_measurement() -> dict:
     return response.json()
 
 
-def measure_access(doc_measurements_path: str) -> pandas.DataFrame:
+def measure_access(doc_df: pandas.DataFrame) -> pandas.DataFrame:
     """
     Either write create aggregated measurements DataFrame because of empty documentation file
     or update existing measurements DataFrame by new ones.
@@ -119,16 +123,17 @@ def measure_access(doc_measurements_path: str) -> pandas.DataFrame:
     
     new_df = aggregate_measurements(new_df).astype(datatype_map)
 
-    if is_measurement_doc_empty(doc_measurements_path):
+    if doc_df.empty: #is_measurement_doc_empty(documented_measurements):
         return new_df.sort_values(['n', 'game'], ascending=False).reset_index(drop=True).astype(datatype_map)
 
-    doc_df = pandas.read_csv(doc_measurements_path, delimiter=";", index_col=False).astype(datatype_map)
+    #doc_df = pandas.read_csv(documented_measurements, delimiter=";", index_col=False).astype(datatype_map)
 
     return update_n(doc_df, new_df).sort_values('n', ascending=False).reset_index(drop=True).astype({'n': 'int64'})
 
 
-def update_measurements(ips_documented: str) -> None:
-    print("Starting measuring open game sessions.")
-    cur_measurement_df = measure_access(ips_documented)
-    cur_measurement_df.to_csv(ips_documented, sep=';', index=False)
-    print("Updated game session log.")
+def update_measurements(documented_measurements: pandas.DataFrame) -> pandas.DataFrame:
+    # print("Starting measuring open game sessions.")
+    cur_measurement_df = measure_access(documented_measurements)
+    # cur_measurement_df.to_csv(ips_documented, sep=';', index=False)
+    print(f"[{datetime.datetime.now()}] Updated game session log.")
+    return cur_measurement_df

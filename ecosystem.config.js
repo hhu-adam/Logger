@@ -6,8 +6,11 @@ module.exports = {
     env: {
         IPS_LOG: "",
         API: "",
+        HARDWARE_SCRIPT: "",
         MEASUREMENT_INTERVAL_MIN: 0,
-        TRANSLATION_TIME: ""
+        MEASUREMENT_HW_INTERVAL_SEC: 0,
+        TRANSLATION_TIME: "",
+        SAVING_TIME: ""
     }
   }]
 }

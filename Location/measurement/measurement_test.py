@@ -2,7 +2,7 @@ import json
 from unittest import TestCase, main
 from unittest.mock import patch
 import pandas
-from measurement import aggregate_measurements, update_n, measure_access
+from measurement import aggregate_measurements_by_game_and_ip, update_n, measure_access
 
 
 class TestMeasurement(TestCase):

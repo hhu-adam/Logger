@@ -17,7 +17,7 @@ Finally write aggregated results to .csv file.
 class UsageMeter:
     def __init__(self) -> None:
         self.API = os.environ.get("API")
-        self.HARDWARE_API = os.environ.get("HARDWARE_API")
+        self.HARDWARE_SCRIPT = os.environ.get("HARDWARE_SCRIPT")
         self.HOME_PAGE_GAMES = ['leanprover-community/nng4',
                         'hhu-adam/robo',
                         'djvelleman/stg4',
@@ -31,9 +31,8 @@ class UsageMeter:
         """
         Call hardware usage script and save values to dict.
         """
-        assert len(self.HARDWARE_API) != 0, "Please set environment variable for the hardware script"
-
-        usage: str = subprocess.check_output(['sh', self.HARDWARE_API]).decode('UTF-8')
+        assert len(self.HARDWARE_SCRIPT) != 0, "Please set environment variable for the hardware script"
+        usage: str = subprocess.check_output(['sh', self.HARDWARE_SCRIPT]).decode('UTF-8')
         usage_measurement: pandas.DataFrame = pandas.read_csv(StringIO(usage), sep=',')
         usage_measurement.insert(0, 'Timestamp', pandas.to_datetime('now').replace(microsecond=0))
         # Remove leading space from MEM column name
@@ -46,7 +45,6 @@ class UsageMeter:
         meant to the bottom of it.
         """
         assert list(gathered_measurements.columns) == self.HW_COLUMNS, f"Columns of DataFrame must be {self.HW_COLUMNS} but were {gathered_measurements.columns}"
-
         new_measurement = self.get_measurement()
         return pandas.concat([gathered_measurements, new_measurement])
     

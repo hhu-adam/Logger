@@ -7,10 +7,11 @@ module.exports = {
         IPS_LOG: "",
         API: "",
         HARDWARE_SCRIPT: "",
+        CPU_SCRIPT: "",
         MEASUREMENT_INTERVAL_MIN: 0,
         MEASUREMENT_HW_INTERVAL_SEC: 0,
-        TRANSLATION_TIME: "",
-        SAVING_TIME: ""
+        TRANSLATION_TIME: "00:00",
+        SAVING_TIME: "00:00"
     }
   }]
 }

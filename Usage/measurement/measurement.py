@@ -79,10 +79,10 @@ class UsageMeter:
 
 
     def get_timestamp_now(self) -> str:
-        return pandas.to_datetime('now').replace(microsecond=0).strftime()
+        return pandas.to_datetime('now').strftime("%y-%m-%d %H:%M:%S")
     
-    def add_timestamp(dataframe: pandas.DataFrame):
-        dataframe.insert(0, 'Timestamp', pandas.to_datetime('now').replace(microsecond=0))
+    def add_timestamp(self,dataframe: pandas.DataFrame):
+        dataframe.insert(0, 'Timestamp', self.get_timestamp_now)
         return dataframe
 
 

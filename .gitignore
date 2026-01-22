@@ -2,3 +2,4 @@ env/
 **.log
 **.info
 **/__pycache__/
+local_ecosystem.config.js

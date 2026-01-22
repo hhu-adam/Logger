@@ -1,4 +1,5 @@
 import json
+import difflib
 from unittest import TestCase, main
 from unittest.mock import patch
 import pandas
@@ -40,11 +41,16 @@ class TestMeasurement(TestCase):
 
         self.assertTrue(mock_data.equals(res_df))
     
-
-    def test_first_time_updating_combined_user_and_hardware_measurements(self):
+    @patch('measurement.UsageMeter.get_timestamp_now')
+    def test_first_time_updating_combined_user_and_hardware_measurements(self, mock_get_timestamp_now):
         exp_df = pandas.read_csv(self.exp_ft_combined_measurement)
+        exp_df = self.um.apply_measurement_dtypes(exp_df)
         sbs_hardware = pandas.read_csv(self.new_hardware_measurement)
         sbs_users = pandas.read_csv(self.new_user_measurement)
+
+
+        mock_timestamp = pandas.Timestamp(year=2026, month=1, day=22, hour=12, minute=10)
+        mock_get_timestamp_now.return_value = mock_timestamp
 
         daily_hardware_user_log: pandas.DataFrame = pandas.DataFrame({"Timestamp": [], 
                                                           "Max_usr": [], 
@@ -54,11 +60,11 @@ class TestMeasurement(TestCase):
         res_df = self.um.update_measurements(daily_hardware_user_log,
                                              sbs_hardware, 
                                              sbs_users)
-        
-        print(exp_df)
-        print(res_df)
+
+        print(res_df["Timestamp"][0] == exp_df["Timestamp"][0])
 
         self.assertTrue(exp_df.equals(res_df))
+    
         
 if __name__ == '__main__':
     main()

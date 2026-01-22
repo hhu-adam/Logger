@@ -54,15 +54,32 @@ class UsageMeter:
                             doc_measurements: pandas.DataFrame, 
                             sbs_hardware: pandas.DataFrame, 
                             sbs_users: pandas.DataFrame) -> pandas.DataFrame:
+                
         max_cpu = sbs_hardware['CPU'].max()
         max_mem = sbs_hardware['MEM'].max()
         max_usr = sbs_users['Users'].max()
+        timestamp = self.get_timestamp_now()
 
-        result = pandas.DataFrame({'Max_usr': [max_usr],
+        result = pandas.DataFrame({'Timestamp': [timestamp],
+                                   'Max_usr': [max_usr],
                                    'Max_cpu': [max_cpu],
                                    'Max_mem': [max_mem]})
         
+        result = self.apply_measurement_dtypes(result)
+        
         return pandas.concat([doc_measurements, result])
+    
+    def apply_measurement_dtypes(self, dataframe: pandas.DataFrame):
+        datatype_map = {'Timestamp': 'string',
+                        'Max_usr': 'float64',
+                        'Max_cpu': 'float64',
+                        'Max_mem': 'float64'}
+        
+        return dataframe.astype(datatype_map)
+
+
+    def get_timestamp_now(self) -> str:
+        return pandas.to_datetime('now').replace(microsecond=0).strftime()
     
     def add_timestamp(dataframe: pandas.DataFrame):
         dataframe.insert(0, 'Timestamp', pandas.to_datetime('now').replace(microsecond=0))

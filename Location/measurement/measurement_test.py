@@ -2,24 +2,26 @@ import json
 from unittest import TestCase, main
 from unittest.mock import patch
 import pandas
-from measurement import aggregate_measurements_by_game_and_ip, update_n, measure_access
+from measurement import LocationMeter
 
 
 class TestMeasurement(TestCase):
 
     def __init__(self, methodName="runTest"):
         super().__init__(methodName)
-        self.doc_df = pandas.read_csv("./test_files/doc_meas.csv", delimiter=';', index_col=False)
-        self.empty_doc_df = pandas.DataFrame({"anon-ip": [], "game": [], "n": []})
-        self.new_measurement = "./test_files/new_meas.csv"
-        self.new_measurement_with_home_page_access_non_shuffled = "./test_files/new_meas_with_home_page_access_non_shuffled.csv"
-        self.new_measurement_with_home_page_access_shuffled = "./test_files/new_meas_with_home_page_access_shuffled.csv"
-        self.expected_updated_documentation = "./test_files/exp_doc_new.csv"
-        self.expected_updated_documentation_without_home_page_access = "./test_files/exp_doc_new_with_home_page_access_non_shuffled.csv"
-        self.expected_initialized_documentation = "./test_files/exp_empty_doc_new.csv"
-        self.expected_initialized_documentation_without_home_page_access = "./test_files/exp_empty_doc_new_with_home_page_access_non_shuffled.csv"
+        self.lm = LocationMeter()
 
-    @patch('measurement.get_measurement')
+        self.doc_df = pandas.read_csv("Location/measurement/test_files/doc_meas.csv", delimiter=';', index_col=False)
+        self.empty_doc_df = pandas.DataFrame({"anon-ip": [], "game": [], "n": []})
+        self.new_measurement = "Location/measurement/test_files/new_meas.csv"
+        self.new_measurement_with_home_page_access_non_shuffled = "Location/measurement/test_files/new_meas_with_home_page_access_non_shuffled.csv"
+        self.new_measurement_with_home_page_access_shuffled = "Location/measurement/test_files/new_meas_with_home_page_access_shuffled.csv"
+        self.expected_updated_documentation = "Location/measurement/test_files/exp_doc_new.csv"
+        self.expected_updated_documentation_without_home_page_access = "Location/measurement/test_files/exp_doc_new_with_home_page_access_non_shuffled.csv"
+        self.expected_initialized_documentation = "Location/measurement/test_files/exp_empty_doc_new.csv"
+        self.expected_initialized_documentation_without_home_page_access = "Location/measurement/test_files/exp_empty_doc_new_with_home_page_access_non_shuffled.csv"
+
+    @patch('measurement.LocationMeter.get_measurement')
     def test_measuring_access_with_empty_documented_measurements(self, mock_get_measurement):
         exp_df = pandas.read_csv(
             self.expected_initialized_documentation, delimiter=';', index_col=False)
@@ -27,10 +29,10 @@ class TestMeasurement(TestCase):
         mock_data = json.loads(pandas.read_csv(self.new_measurement, delimiter=';').to_json())
         mock_get_measurement.return_value = mock_data
 
-        res_df = measure_access(self.empty_doc_df)
+        res_df = self.lm.measure_access(self.empty_doc_df)
         self.assertTrue(exp_df.equals(res_df))
 
-    @patch('measurement.get_measurement')
+    @patch('measurement.LocationMeter.get_measurement')
     def test_measuring_access_with_empty_documented_measurements_with_home_page_access_non_shuffled(self, mock_get_measurement):
         exp_df = pandas.read_csv(
             self.expected_initialized_documentation_without_home_page_access, delimiter=';', index_col=False)
@@ -38,10 +40,10 @@ class TestMeasurement(TestCase):
         mock_data = json.loads(pandas.read_csv(self.new_measurement_with_home_page_access_non_shuffled, delimiter=';').to_json())
         mock_get_measurement.return_value = mock_data
 
-        res_df = measure_access(self.empty_doc_df)
+        res_df = self.lm.measure_access(self.empty_doc_df)
         self.assertTrue(exp_df.equals(res_df))
 
-    @patch('measurement.get_measurement')
+    @patch('measurement.LocationMeter.get_measurement')
     def test_measuring_access_with_empty_documented_measurements_with_home_page_access_shuffled(self, mock_get_measurement):
         exp_df = pandas.read_csv(
             self.expected_initialized_documentation_without_home_page_access, delimiter=';', index_col=False)
@@ -49,10 +51,10 @@ class TestMeasurement(TestCase):
         mock_data = json.loads(pandas.read_csv(self.new_measurement_with_home_page_access_shuffled, delimiter=';').to_json())
         mock_get_measurement.return_value = mock_data
 
-        res_df = measure_access(self.empty_doc_df)
+        res_df = self.lm.measure_access(self.empty_doc_df)
         self.assertTrue(exp_df.equals(res_df))
 
-    @patch('measurement.get_measurement')
+    @patch('measurement.LocationMeter.get_measurement')
     def test_updating_already_existing_documentation(self, mock_get_measurement):
         exp_df = pandas.read_csv(
             self.expected_updated_documentation, delimiter=';', index_col=False)
@@ -60,10 +62,10 @@ class TestMeasurement(TestCase):
         mock_data = json.loads(pandas.read_csv(self.new_measurement, delimiter=';').to_json())
         mock_get_measurement.return_value = mock_data
 
-        res_df = measure_access(self.doc_df)
+        res_df = self.lm.measure_access(self.doc_df)
         self.assertTrue(exp_df.equals(res_df))
 
-    @patch('measurement.get_measurement')
+    @patch('measurement.LocationMeter.get_measurement')
     def test_updating_already_existing_documentation_with_home_page_access_shuffled(self, mock_get_measurement):
         exp_df = pandas.read_csv(
             self.expected_updated_documentation_without_home_page_access, delimiter=';', index_col=False)
@@ -71,10 +73,10 @@ class TestMeasurement(TestCase):
         mock_data = json.loads(pandas.read_csv(self.new_measurement_with_home_page_access_shuffled, delimiter=';').to_json())
         mock_get_measurement.return_value = mock_data
 
-        res_df = measure_access(self.doc_df)
+        res_df = self.lm.measure_access(self.doc_df)
         self.assertTrue(exp_df.equals(res_df))
 
-    @patch('measurement.get_measurement')
+    @patch('measurement.LocationMeter.get_measurement')
     def test_updating_already_existing_documentation_with_home_page_access_non_shuffled(self, mock_get_measurement):
         exp_df = pandas.read_csv(
             self.expected_updated_documentation_without_home_page_access, delimiter=';', index_col=False)
@@ -82,7 +84,7 @@ class TestMeasurement(TestCase):
         mock_data = json.loads(pandas.read_csv(self.new_measurement_with_home_page_access_non_shuffled, delimiter=';').to_json())
         mock_get_measurement.return_value = mock_data
 
-        res_df = measure_access(self.doc_df)
+        res_df = self.lm.measure_access(self.doc_df)
         self.assertTrue(exp_df.equals(res_df))
 
     def test_with_two_players_accessing_two_games(self):
@@ -117,8 +119,8 @@ class TestMeasurement(TestCase):
                     'n': [4, 3]}
 
         doc_df = pandas.DataFrame(old_data)
-        new_df = aggregate_measurements(pandas.DataFrame(new_data))
-        res_df = update_n(doc_df, new_df)
+        new_df = self.lm.aggregate_measurements_by_game_and_ip(pandas.DataFrame(new_data))
+        res_df = self.lm.update_n(doc_df, new_df)
         exp_df = pandas.DataFrame(exp_data)
 
         self.assertTrue(exp_df.equals(res_df))
@@ -155,8 +157,8 @@ class TestMeasurement(TestCase):
                     'n': [4, 3]}
 
         doc_df = pandas.DataFrame(old_data)
-        new_df = aggregate_measurements(pandas.DataFrame(new_data))
-        res_df = update_n(doc_df, new_df)
+        new_df = self.lm.aggregate_measurements_by_game_and_ip(pandas.DataFrame(new_data))
+        res_df = self.lm.update_n(doc_df, new_df)
         exp_df = pandas.DataFrame(exp_data)
 
         self.assertTrue(exp_df.equals(res_df))
@@ -183,7 +185,7 @@ class TestMeasurement(TestCase):
                                 'n': [1, 1, 1]}
 
         new_df = pandas.DataFrame(new_data)
-        agg_df = aggregate_measurements(new_df)
+        agg_df = self.lm.aggregate_measurements_by_game_and_ip(new_df)
 
         expected_df = pandas.DataFrame(expected_aggregation)
         self.assertTrue(expected_df.equals(agg_df))
@@ -208,7 +210,7 @@ class TestMeasurement(TestCase):
                                 'n': [2, 1]}
 
         new_df = pandas.DataFrame(new_data)
-        agg_df = aggregate_measurements(new_df)
+        agg_df = self.lm.aggregate_measurements_by_game_and_ip(new_df)
 
         expected_df = pandas.DataFrame(expected_aggregation)
         self.assertTrue(expected_df.equals(agg_df))
@@ -247,7 +249,7 @@ class TestMeasurement(TestCase):
         old_df = pandas.DataFrame(old_data)
         exp_df = pandas.DataFrame(exp_data)
 
-        updated_df = update_n(old_df, new_df)
+        updated_df = self.lm.update_n(old_df, new_df)
 
         self.assertTrue(exp_df.equals(updated_df))
 
@@ -285,7 +287,7 @@ class TestMeasurement(TestCase):
         old_df = pandas.DataFrame(old_data)
         exp_df = pandas.DataFrame(exp_data)
 
-        updated_df = update_n(old_df, new_df)
+        updated_df = self.lm.update_n(old_df, new_df)
 
         self.assertTrue(exp_df.equals(updated_df))
 
@@ -311,7 +313,7 @@ class TestMeasurement(TestCase):
         exp_df = pandas.DataFrame(expected_aggregation).astype(
             dtype={'anon-ip': 'object', 'game': 'object', 'n': 'int64'})
 
-        agg_df = aggregate_measurements(new_df)
+        agg_df = self.lm.aggregate_measurements_by_game_and_ip(new_df)
 
         self.assertTrue(exp_df.equals(agg_df))
 
@@ -345,7 +347,7 @@ class TestMeasurement(TestCase):
         exp_df = pandas.DataFrame(expected_aggregation).astype(
             dtype={'anon-ip': 'object', 'game': 'object', 'n': 'int64'})
 
-        agg_df = aggregate_measurements(new_df)
+        agg_df = self.lm.aggregate_measurements_by_game_and_ip(new_df)
 
         self.assertTrue(exp_df.equals(agg_df))
 
@@ -386,7 +388,7 @@ class TestMeasurement(TestCase):
         exp_df = pandas.DataFrame(expected_aggregation).astype(
             dtype={'anon-ip': 'object', 'game': 'object', 'n': 'int64'})
 
-        agg_df = aggregate_measurements(new_df)
+        agg_df = self.lm.aggregate_measurements_by_game_and_ip(new_df)
 
         self.assertTrue(exp_df.equals(agg_df))
 

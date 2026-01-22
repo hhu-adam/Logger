@@ -97,7 +97,7 @@ def clear_measurements(doc_df: pandas.DataFrame, message: str) -> None:
     # f = open(ips_documented, 'r+', encoding="utf_8")
     # f.truncate(0)
     doc_df.drop(doc_df.index, inplace=True)
-    print(f"[{datetime.datetime.now()}] {message} cleared from DataFrame: {doc_df}")
+    print(f"[{datetime.now()}] {message} cleared from DataFrame: {doc_df}")
 
 while True:
     run_pending()

@@ -1,3 +1,4 @@
+from datetime import datetime
 import os
 import pandas
 import subprocess
@@ -65,7 +66,9 @@ class UsageMeter:
                                    'Max_mem': [max_mem]})
         
         result = self.apply_measurement_dtypes(result)
-        
+
+        print(f"[{datetime.datetime.now()}] Updated user-hardware log.")
+
         return pandas.concat([doc_measurements, result])
     
     def apply_measurement_dtypes(self, dataframe: pandas.DataFrame):

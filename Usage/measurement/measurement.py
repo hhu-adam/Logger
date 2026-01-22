@@ -3,7 +3,6 @@ import pandas
 import subprocess
 
 from io import StringIO
-from prometheus_api_client import PrometheusConnect
 
 
 """

@@ -5,7 +5,7 @@ import pandas
 from datetime import datetime, timedelta
 from schedule import every, repeat, run_pending
 from Location.measurement.measurement import LocationMeter
-from Location.translation.translation import create_translation, clear_daily_measurements
+from Location.translation.translation import create_translation
 from Usage.measurement.measurement import UsageMeter
 
 def relative_path(rel_path: str) -> str:
@@ -56,6 +56,9 @@ def measuring_job_maximum_usage():
     daily_hardware_user_log = use_meter.update_measurements(daily_hardware_user_log,
                                                             sec_by_sec_hw_usage,
                                                             sec_by_sec_user_count)
+    # Clear aggregated user and hardware statistics
+    clear_measurements(sec_by_sec_user_count, "Sec by sec user measurements")
+    clear_measurements(sec_by_sec_hw_usage, "Sec by sec hardware measurements")
 
 @repeat(every().day.at(SAVING_TIME))
 def saving_job():
@@ -67,7 +70,7 @@ def saving_job():
     
     daily_hardware_user_log.to_csv(save_path)
 
-    clear_daily_measurements(daily_hardware_user_log)
+    clear_measurements(daily_hardware_user_log)
 
 @repeat(every().day.at(TRANSLATION_TIME))
 def translating_job():
@@ -88,8 +91,13 @@ def translating_job():
         print(f"Undefined exception during translation: {e}", file=sys.stderr)
 
     if translated:
-        clear_daily_measurements(daily_game_user_log)
+        clear_measurements(daily_game_user_log, "Daily measurements")
 
+def clear_measurements(doc_df: pandas.DataFrame, message: str) -> None:
+    # f = open(ips_documented, 'r+', encoding="utf_8")
+    # f.truncate(0)
+    doc_df.drop(doc_df.index, inplace=True)
+    print(f"[{datetime.datetime.now()}] {message} cleared from DataFrame: {doc_df}")
 
 while True:
     run_pending()

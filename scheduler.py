@@ -70,7 +70,7 @@ def saving_job():
     
     daily_hardware_user_log.to_csv(save_path)
 
-    clear_measurements(daily_hardware_user_log)
+    clear_measurements(daily_hardware_user_log, "Daily hardware-user measurements")
 
 @repeat(every().day.at(TRANSLATION_TIME))
 def translating_job():

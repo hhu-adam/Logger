@@ -18,7 +18,7 @@ def _ip_to_country(ip: str, cache: dict[str, str]) -> str:
 
     if cache.get(ip) == None:
         location = requests.get(f"https://ipinfo.io/{ip}")
-        assert location.status_code == 200, "Failed to receive information from given IP-address"
+        assert location.status_code == 200, print(f"[{datetime.datetime.now()}] - Reveived bad status code {location.status_code} from IP {ip}", file=sys.stderr)
         country = location.json().get('country', "UNKNOWN")
         cache[ip] = country
         return country

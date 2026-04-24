@@ -86,7 +86,7 @@ def translating_job():
         translated = True
     except FileNotFoundError as e:
         print(
-            f"Exception during translation: {e}", file=sys.stderr)
+            f"[{datetime.now()}] Exception during translation: {e}", file=sys.stderr)
     except Exception as e:
         print(f"Undefined exception during translation: {e}", file=sys.stderr)
 

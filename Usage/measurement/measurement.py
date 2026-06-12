@@ -41,7 +41,10 @@ class UsageMeter:
 
         ram_result = self.prom_con.custom_query(ram_query)
 
-        print(ram_result)
+        for result in ram_result:
+            instance = result["metric"].get("instance", "unknown")
+            max_cpu = float(result["value"][1])
+            print(f"[RAM] Instance: {instance} | Max usage: {max_cpu:.2f}%")
     
     def get_max_cpu_usage_over_ten_min(self):
         # 1) Count the amount of seconds each CPU is in idle-mode
@@ -59,7 +62,10 @@ class UsageMeter:
 
         cpu_result = self.prom_con.custom_query(cpu_query)
 
-        print(cpu_result)
+        for result in cpu_result:
+            instance = result["metric"].get("instance", "unknown")
+            max_cpu = float(result["value"][1])
+            print(f"[CPU] Instance: {instance} | Max usage: {max_cpu:.2f}%")
 
     def get_measurement(self) -> dict:
         """

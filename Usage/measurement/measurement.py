@@ -29,7 +29,7 @@ class UsageMeter:
         self.HW_COLUMNS = ['Timestamp', 'CPU', 'MEM']
         self.DOCUMENTED_COLUMNS = ['timestamp', 'num_useres', 'cpu', 'ram']
 
-        self.prom_con = PrometheusConnect(url="", disable_ssl=True)
+        self.prom_con = PrometheusConnect(url="http://localhost:9090", disable_ssl=True)
     
     def get_max_ram_usage_over_ten_min(self):
         ram_query = """

@@ -60,12 +60,15 @@ class UsageMeter:
         )) * 100
         """
 
-        cpu_result = self.prom_con.custom_query(cpu_query)
+        result_list = self.prom_con.custom_query(cpu_query)
+        assert len(result_list) == 1, f"[UsageMeter] Expected 1 result, got {len(result_list)}"
+        cpu_result = result_list[0]
 
-        for result in cpu_result:
-            instance = result["metric"].get("instance", "unknown")
-            max_cpu = float(result["value"][1])
-            print(f"[CPU] Instance: {instance} | Max usage: {max_cpu:.2f}%")
+        instance = cpu_result["metric"].get("instance", "unknown")
+        max_cpu = float(cpu_result["value"][1])
+        print(f"[CPU] Instance: {instance} | Max usage: {max_cpu:.2f}%")
+
+        
 
     def get_measurement(self) -> dict:
         """

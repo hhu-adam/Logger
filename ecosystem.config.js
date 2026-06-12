@@ -7,6 +7,7 @@ module.exports = {
         IPS_LOG: "",
         API: "",
         HARDWARE_SCRIPT: "",
+        HARDWARE_INFO_FILE: "",
         CPU_SCRIPT: "",
         MEASUREMENT_INTERVAL_MIN: 0,
         MEASUREMENT_HW_INTERVAL_SEC: 0,

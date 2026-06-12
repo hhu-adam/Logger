@@ -20,6 +20,7 @@ class UsageMeter:
     def __init__(self) -> None:
         self.API = os.environ.get("API")
         self.HARDWARE_SCRIPT = os.environ.get("HARDWARE_SCRIPT")
+        self.hardware_info_file = os.environ.get("HARDWARE_INFO_FILE")
         self.HOME_PAGE_GAMES = ['leanprover-community/nng4',
                         'hhu-adam/robo',
                         'djvelleman/stg4',
@@ -71,8 +72,6 @@ class UsageMeter:
         print(f"[CPU] Instance: {instance} | Max usage: {max_cpu:.2f}%")
         return max_cpu
 
-        
-
     def get_measurement(self) -> dict:
         """
         Call hardware usage script and save values to dict.
@@ -111,9 +110,15 @@ class UsageMeter:
         
         result = self.apply_measurement_dtypes(result)
 
+        assert self.hardware_info_file is not None, "[UsageMeter] please specify file where to save current hardware measures!"
+        
+        with open(self.hardware_info_file, 'w') as filetowrite:
+            filetowrite.write(result.to_csv())
+
         print(f"[{datetime.datetime.now()}] Updated user-hardware log.")
 
         return pandas.concat([doc_measurements, result])
+    
     
     def apply_measurement_dtypes(self, dataframe: pandas.DataFrame):
         datatype_map = {'Timestamp': 'string',

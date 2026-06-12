@@ -33,10 +33,10 @@ class UsageMeter:
     
     def get_max_ram_usage_over_ten_min(self):
         ram_query = """
-        max_over_time(
-            (1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) * 100
+        (1 - min_over_time(
+            (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)
             [10m:]
-        )
+        )) * 100
         """
 
         ram_result = self.prom_con.custom_query(ram_query)
@@ -47,14 +47,14 @@ class UsageMeter:
         # 1) Count the amount of seconds each CPU is in idle-mode
         # 2) Compute with rate the idle-fraction per core, smoothed over a minute
         # 3) Average the idle-rates over all cores
-        # 4) Subtracting average idle-rate from 1 gives usage-rate
-        # 5) Convert usage rate to percentage
-        # 6) Return maximum usage-rate percentage over last ten minutes
+        # 4) Compile minimum average idle-rate of the last then minutes
+        # 5) Subtract minimum average idle-rate from 1 and multiply by 100 
+        # to get maximum average usage for the last ten minutes
         cpu_query = """
-        max_over_time(
-            (1 - avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[1m]))) * 100
+        1 - min_over_time(
+            avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[1m]))
             [10m:]
-        )
+        ) * 100
         """
 
         cpu_result = self.prom_con.custom_query(cpu_query)

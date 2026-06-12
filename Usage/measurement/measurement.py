@@ -31,7 +31,7 @@ class UsageMeter:
 
         self.prom_con = PrometheusConnect(url="http://localhost:9090", disable_ssl=True)
     
-    def get_max_ram_usage_over_ten_min(self):
+    def get_max_ram_usage_over_ten_min(self) -> float:
         ram_query = """
         (1 - min_over_time(
             (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)
@@ -39,14 +39,16 @@ class UsageMeter:
         )) * 100
         """
 
-        ram_result = self.prom_con.custom_query(ram_query)
+        result_list = self.prom_con.custom_query(ram_query)
+        assert len(result_list) == 1, f"[UsageMeter] Expected 1 result, got {len(result_list)}"
+        ram_result = result_list[0]
 
-        for result in ram_result:
-            instance = result["metric"].get("instance", "unknown")
-            max_cpu = float(result["value"][1])
-            print(f"[RAM] Instance: {instance} | Max usage: {max_cpu:.2f}%")
+        instance = ram_result["metric"].get("instance", "unknown")
+        max_ram = float(ram_result["value"][1])
+        print(f"[RAM] Instance: {instance} | Max usage: {max_ram:.2f}%")
+        return max_ram
     
-    def get_max_cpu_usage_over_ten_min(self):
+    def get_max_cpu_usage_over_ten_min(self) -> float:
         # 1) Count the amount of seconds each CPU is in idle-mode
         # 2) Compute with rate the idle-fraction per core, smoothed over a minute
         # 3) Average the idle-rates over all cores
@@ -67,6 +69,7 @@ class UsageMeter:
         instance = cpu_result["metric"].get("instance", "unknown")
         max_cpu = float(cpu_result["value"][1])
         print(f"[CPU] Instance: {instance} | Max usage: {max_cpu:.2f}%")
+        return max_cpu
 
         
 
@@ -93,11 +96,10 @@ class UsageMeter:
     
     def update_measurements(self,
                             doc_measurements: pandas.DataFrame, 
-                            sbs_hardware: pandas.DataFrame, 
                             sbs_users: pandas.DataFrame) -> pandas.DataFrame:
                 
-        max_cpu = sbs_hardware['CPU'].max()
-        max_mem = sbs_hardware['MEM'].max()
+        max_cpu = self.get_max_cpu_usage_over_ten_min()
+        max_mem = self.get_max_ram_usage_over_ten_min()
         max_usr = sbs_users['Users'].max()
         timestamp = self.get_timestamp_now()
 

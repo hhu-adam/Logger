@@ -38,8 +38,8 @@ SAVING_TIME: str = os.getenv("SAVING_TIME")
 @repeat(every(MEASURING_INTERVAL_SEC).seconds)
 def measuring_job_hardware():
     global sec_by_sec_hw_usage
-    use_meter.get_max_cpu_usage_over_ten_min()
-    use_meter.get_max_ram_usage_over_ten_min()
+    #use_meter.get_max_cpu_usage_over_ten_min()
+    #use_meter.get_max_ram_usage_over_ten_min()
     sec_by_sec_hw_usage = use_meter.measure_hardware(sec_by_sec_hw_usage)
 
 @repeat(every(MEASURING_INTERVAL_SEC).seconds)
@@ -56,8 +56,9 @@ def measuring_job_player_retention():
 def measuring_job_maximum_usage():
     global daily_hardware_user_log
     daily_hardware_user_log = use_meter.update_measurements(daily_hardware_user_log,
-                                                            sec_by_sec_hw_usage,
                                                             sec_by_sec_user_count)
+    
+    print(daily_hardware_user_log)
     # Clear aggregated user and hardware statistics
     clear_measurements(sec_by_sec_user_count, "Sec by sec user measurements")
     clear_measurements(sec_by_sec_hw_usage, "Sec by sec hardware measurements")

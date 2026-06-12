@@ -54,10 +54,10 @@ class UsageMeter:
         # 5) Subtract minimum average idle-rate from 1 and multiply by 100 
         # to get maximum average usage for the last ten minutes
         cpu_query = """
-        1 - min_over_time(
+        (1 - min_over_time(
             avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[1m]))
             [10m:]
-        ) * 100
+        )) * 100
         """
 
         cpu_result = self.prom_con.custom_query(cpu_query)

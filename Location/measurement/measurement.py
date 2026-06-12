@@ -17,7 +17,6 @@ class LocationMeter():
 
     def __init__(self) -> None:
         self.API = os.environ.get("API")
-
         self.HOME_PAGE_GAMES = ['leanprover-community/nng4',
                         'hhu-adam/robo',
                         'djvelleman/stg4',
@@ -96,22 +95,24 @@ class LocationMeter():
         df = self.filter_home_page_accesses(df)
         return df.groupby(['anon-ip']).size().reset_index(name="n")
 
-    def is_measurement_doc_empty(doc_measurements_path: str):
+    def is_measurement_doc_empty(self, doc_measurements_path: str):
         """
         Check if there are any lines in the documented measurements.
         """
         return os.stat(doc_measurements_path).st_size == 0
 
 
-    def get_measurement(self) -> dict:
+    def get_measurement(self) -> dict | None:
         """
         Calls API to receive information about current game
         session measurements
         """
 
+        assert self.API is not None, "[LocationMeter] Could not retrive env-var API!"
         assert len(self.API) != 0, "API string is empty!"
 
         response = requests.get(self.API, timeout=2000)
+        
         if response.status_code != 200:
             print('API call for open game sessions failed.', file=sys.stderr)
             return

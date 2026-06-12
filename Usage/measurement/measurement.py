@@ -113,7 +113,7 @@ class UsageMeter:
         assert self.hardware_info_file is not None, "[UsageMeter] please specify file where to save current hardware measures!"
         
         with open(self.hardware_info_file, 'w') as filetowrite:
-            filetowrite.write(result.reset_index().to_csv())
+            filetowrite.write(result.to_csv())
 
         print(f"[{datetime.datetime.now()}] Updated user-hardware log.")
 

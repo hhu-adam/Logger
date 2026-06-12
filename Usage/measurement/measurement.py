@@ -101,6 +101,7 @@ class UsageMeter:
         max_cpu = self.get_max_cpu_usage_over_ten_min()
         max_mem = self.get_max_ram_usage_over_ten_min()
         max_usr = sbs_users['Users'].max()
+        print(f"[USERS] Max users: {max_usr}")
         timestamp = self.get_timestamp_now()
 
         result = pandas.DataFrame({'Timestamp': [timestamp],

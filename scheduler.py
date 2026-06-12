@@ -58,7 +58,7 @@ def measuring_job_maximum_usage():
     daily_hardware_user_log = use_meter.update_measurements(daily_hardware_user_log,
                                                             sec_by_sec_user_count)
     
-    print(daily_hardware_user_log)
+    print(f"Hardware user logs: {daily_hardware_user_log}")
     # Clear aggregated user and hardware statistics
     clear_measurements(sec_by_sec_user_count, "Sec by sec user measurements")
     clear_measurements(sec_by_sec_hw_usage, "Sec by sec hardware measurements")

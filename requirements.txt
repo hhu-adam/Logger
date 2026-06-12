@@ -1,3 +1,4 @@
 pandas
 schedule
 requests
+prometheus-api-client

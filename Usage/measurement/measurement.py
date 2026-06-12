@@ -1,11 +1,3 @@
-import datetime
-import os
-import pandas
-import subprocess
-
-from io import StringIO
-
-
 """
 Reads the game-access logs for the first time 
 and groups results by Anon-IP and Game.
@@ -13,6 +5,16 @@ Values for n (number of measurement occurances) is
 initialized to 1. 
 Finally write aggregated results to .csv file.
 """
+
+import datetime
+import os
+import pandas
+import subprocess
+from prometheus_api_client.prometheus_connect import PrometheusConnect
+import requests
+
+from io import StringIO
+
 
 class UsageMeter:
     def __init__(self) -> None:
@@ -26,6 +28,38 @@ class UsageMeter:
         self.MEASUREMENT_COLUMNS = ['date', 'anon-ip', 'game','lang']
         self.HW_COLUMNS = ['Timestamp', 'CPU', 'MEM']
         self.DOCUMENTED_COLUMNS = ['timestamp', 'num_useres', 'cpu', 'ram']
+
+        self.prom_con = PrometheusConnect(url="", disable_ssl=True)
+    
+    def get_max_ram_usage_over_ten_min(self):
+        ram_query = """
+        max_over_time(
+            (1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) * 100
+            [10m:]
+        )
+        """
+
+        ram_result = self.prom_con.custom_query(ram_query)
+
+        print(ram_result)
+    
+    def get_max_cpu_usage_over_ten_min(self):
+        # 1) Count the amount of seconds each CPU is in idle-mode
+        # 2) Compute with rate the idle-fraction per core, smoothed over a minute
+        # 3) Average the idle-rates over all cores
+        # 4) Subtracting average idle-rate from 1 gives usage-rate
+        # 5) Convert usage rate to percentage
+        # 6) Return maximum usage-rate percentage over last ten minutes
+        cpu_query = """
+        max_over_time(
+            (1 - avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[1m]))) * 100
+            [10m:]
+        )
+        """
+
+        cpu_result = self.prom_con.custom_query(cpu_query)
+
+        print(cpu_result)
 
     def get_measurement(self) -> dict:
         """

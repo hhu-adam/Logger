@@ -38,6 +38,8 @@ SAVING_TIME: str = os.getenv("SAVING_TIME")
 @repeat(every(MEASURING_INTERVAL_SEC).seconds)
 def measuring_job_hardware():
     global sec_by_sec_hw_usage
+    use_meter.get_max_cpu_usage_over_ten_min()
+    use_meter.get_max_ram_usage_over_ten_min()
     sec_by_sec_hw_usage = use_meter.measure_hardware(sec_by_sec_hw_usage)
 
 @repeat(every(MEASURING_INTERVAL_SEC).seconds)

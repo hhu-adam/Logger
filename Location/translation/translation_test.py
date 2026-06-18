@@ -1,7 +1,8 @@
 import unittest
 import pandas
 import os
-from translation import update_usage_statistics, write_translation_log
+from unittest.mock import Mock, patch
+from translation import translate, update_usage_statistics, write_translation_log
 
 
 class TestTranslation(unittest.TestCase):
@@ -142,6 +143,27 @@ class TestTranslation(unittest.TestCase):
         updated_df = update_usage_statistics(new_df, old_df, cache)
 
         self.assertTrue(expected_df.equals(updated_df))
+
+    @patch.dict(os.environ, {}, clear=True)
+    @patch('translation.requests.get')
+    def test_failed_ip_lookup_is_marked_unknown(self, mock_get):
+        mock_get.return_value = Mock(status_code=503)
+
+        new_data = {'anon-ip': ['1'],
+                    'game': ['leanprover-community/nng4'],
+                    'n': [1.0]}
+
+        expected_data = {'country': ['??'],
+                         'game': ['leanprover-community/nng4'],
+                         'n': [1.0]}
+
+        new_df = pandas.DataFrame(new_data)
+        expected_df = pandas.DataFrame(expected_data)
+
+        translated_df = translate(new_df, {})
+
+        self.assertTrue(expected_df.equals(translated_df))
+        self.assertEqual(2, mock_get.call_count)
 
 
 if __name__ == '__main__':

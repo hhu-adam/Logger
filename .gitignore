@@ -3,3 +3,4 @@ env/
 **.info
 **/__pycache__/
 local_ecosystem.config.js
+.vscode/

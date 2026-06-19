@@ -33,7 +33,7 @@ HOME_PAGE_GAMES = ['leanprover-community/nng4',
 
 class UsageMeter:
     def __init__(self) -> None:
-        self.API = os.environ.get("API")
+        # self.API = os.environ.get("API")
         #self.HARDWARE_SCRIPT = os.environ.get("HARDWARE_SCRIPT")
         self.hardware_info_file = os.environ.get("HARDWARE_INFO_FILE")
         self.prom_con = PrometheusConnect(url="http://localhost:9090", disable_ssl=True)

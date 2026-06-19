@@ -111,8 +111,6 @@ class LocationMeter():
         assert self.API is not None, "[LocationMeter] Could not retrive env-var API!"
         assert len(self.API) != 0, "API string is empty!"
 
-        print(f"[DEBUG] Call API with adress: {self.API}", file=sys.stderr)
-        return
         response = requests.get(self.API, timeout=2000)
         
         if response.status_code != 200:

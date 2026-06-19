@@ -1,6 +1,8 @@
 import sys
 import os
 import pandas
+import traceback
+
 from datetime import datetime, timedelta
 from schedule import every, repeat, run_pending
 from Location.measurement.measurement import LocationMeter
@@ -27,8 +29,12 @@ SAVING_TIME: str = os.getenv("SAVING_TIME", "00:00")
 
 @repeat(every(MEASURING_INTERVAL_SEC).seconds)
 def measuring_job_users():
-    with data_lock:
-        state.sec_by_sec_user_count = loc_meter.gather_sec_by_sec_measurements(state.sec_by_sec_user_count)
+    try:
+        with data_lock:
+            state.sec_by_sec_user_count = loc_meter.gather_sec_by_sec_measurements(state.sec_by_sec_user_count)
+    except Exception as e:
+        print(f"[measuring_job_users] Exception: {e}", flush=True)
+        traceback.print_exc()
 
 @repeat(every(MEASURING_INTERVAL_MIN).minutes)
 def measuring_job_player_retention():

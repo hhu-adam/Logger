@@ -112,6 +112,7 @@ class LocationMeter():
         assert len(self.API) != 0, "API string is empty!"
 
         print(f"[DEBUG] Call API with adress: {self.API}", file=sys.stderr)
+        return
         response = requests.get(self.API, timeout=2000)
         
         if response.status_code != 200:

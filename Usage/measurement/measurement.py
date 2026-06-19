@@ -15,21 +15,27 @@ import requests
 
 from io import StringIO
 
+HOME_PAGE_GAMES = ['leanprover-community/nng4',
+                   'hhu-adam/robo',
+                   'djvelleman/stg4',
+                   'trequetrum/lean4game-logic',
+                   'jadabouhawili/knightsandknaves-lean4game']
+
+#MEASUREMENT_COLUMNS = ['date', 
+#                       'anon-ip', 
+#                       'game',
+#                       'lang']
+
+#HW_COLUMNS = ['Timestamp', 
+#              'CPU', 
+#              'MEM']
+
 
 class UsageMeter:
     def __init__(self) -> None:
         self.API = os.environ.get("API")
-        self.HARDWARE_SCRIPT = os.environ.get("HARDWARE_SCRIPT")
+        #self.HARDWARE_SCRIPT = os.environ.get("HARDWARE_SCRIPT")
         self.hardware_info_file = os.environ.get("HARDWARE_INFO_FILE")
-        self.HOME_PAGE_GAMES = ['leanprover-community/nng4',
-                        'hhu-adam/robo',
-                        'djvelleman/stg4',
-                        'trequetrum/lean4game-logic',
-                        'jadabouhawili/knightsandknaves-lean4game']
-        self.MEASUREMENT_COLUMNS = ['date', 'anon-ip', 'game','lang']
-        self.HW_COLUMNS = ['Timestamp', 'CPU', 'MEM']
-        self.DOCUMENTED_COLUMNS = ['timestamp', 'num_useres', 'cpu', 'ram']
-
         self.prom_con = PrometheusConnect(url="http://localhost:9090", disable_ssl=True)
     
     def get_max_ram_usage_over_ten_min(self) -> float:
@@ -72,36 +78,22 @@ class UsageMeter:
         print(f"[CPU] Instance: {instance} | Max usage: {max_cpu:.2f}%")
         return max_cpu
 
-    def get_measurement(self) -> dict:
-        """
-        Call hardware usage script and save values to dict.
-        """
-        assert len(self.HARDWARE_SCRIPT) != 0, "Please set environment variable for the hardware script"
-        usage: str = subprocess.check_output(['sh', self.HARDWARE_SCRIPT]).decode('UTF-8')
-        usage_measurement: pandas.DataFrame = pandas.read_csv(StringIO(usage), sep=',')
-        usage_measurement.insert(0, 'Timestamp', pandas.to_datetime('now').replace(microsecond=0))
-        # Remove leading space from MEM column name
-        usage_measurement.columns = usage_measurement.columns.str.lstrip()
-        return usage_measurement
-
-    def measure_hardware(self, gathered_measurements: pandas.DataFrame):
-        """
-        Take a dataframe of second by second hardware measurements and append a new meausre
-        meant to the bottom of it.
-        """
-        assert list(gathered_measurements.columns) == self.HW_COLUMNS, f"Columns of DataFrame must be {self.HW_COLUMNS} but were {gathered_measurements.columns}"
-        new_measurement = self.get_measurement()
-        return pandas.concat([gathered_measurements, new_measurement])
     
     def update_measurements(self,
                             doc_measurements: pandas.DataFrame, 
                             sbs_users: pandas.DataFrame) -> pandas.DataFrame:
                 
+        result = self.get_measurement(sbs_users)
+        print(f"[{datetime.datetime.now()}] Updated user-hardware log.")
+        return pandas.concat([doc_measurements, result])
+
+    def get_measurement(self, sbs_users):
         max_cpu = self.get_max_cpu_usage_over_ten_min()
         max_mem = self.get_max_ram_usage_over_ten_min()
         max_usr = sbs_users['Users'].max()
         print(f"[USERS] Max users: {max_usr}")
         timestamp = self.get_timestamp_now()
+        print(f"Timestamp: {timestamp}")
 
         result = pandas.DataFrame({'Timestamp': [timestamp],
                                    'Max_usr': [max_usr],
@@ -109,15 +101,7 @@ class UsageMeter:
                                    'Max_mem': [max_mem]})
         
         result = self.apply_measurement_dtypes(result)
-
-        assert self.hardware_info_file is not None, "[UsageMeter] please specify file where to save current hardware measures!"
-        
-        with open(self.hardware_info_file, 'w') as filetowrite:
-            filetowrite.write(result.to_csv())
-
-        print(f"[{datetime.datetime.now()}] Updated user-hardware log.")
-
-        return pandas.concat([doc_measurements, result])
+        return result
     
     
     def apply_measurement_dtypes(self, dataframe: pandas.DataFrame):
@@ -132,8 +116,9 @@ class UsageMeter:
     def get_timestamp_now(self) -> str:
         return pandas.to_datetime('now').strftime("%y-%m-%d %H:%M:%S")
     
+
     def add_timestamp(self,dataframe: pandas.DataFrame):
-        dataframe.insert(0, 'Timestamp', self.get_timestamp_now)
+        dataframe.insert(0, 'Timestamp', self.get_timestamp_now())
         return dataframe
 
 

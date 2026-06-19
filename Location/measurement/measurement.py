@@ -122,7 +122,7 @@ class LocationMeter():
     def measure_access_sec_by_sec(self) -> pandas.DataFrame:
         """
         Measure each individual game-ip combination and sum them up as the number
-        of current users in during the moment of measurement.
+        of current users during the moment of measurement.
         """
         datatype_map = {'anon-ip': 'object','game': 'object','n': 'int64'}
         measurement = self.get_measurement()

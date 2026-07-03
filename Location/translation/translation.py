@@ -19,7 +19,7 @@ def _ip_to_country(ip: str, cache: dict[str, str]) -> str:
     if cache.get(ip) != None:
         return cache.get(ip)
 
-    country = "??"
+    country = "UNKNOWN"
     token = os.environ.get("IPINFO_TOKEN")
 
     for attempt in range(2):
@@ -45,7 +45,7 @@ def _ip_to_country(ip: str, cache: dict[str, str]) -> str:
             print(f"[{datetime.datetime.now()}] - Exception during IP lookup for {ip}: {e}", file=sys.stderr)
 
         if attempt == 1:
-            print(f"[{datetime.datetime.now()}] - Could not translate IP {ip}; using ??", file=sys.stderr)
+            print(f"[{datetime.datetime.now()}] - Could not translate IP {ip}; using UNKNOWN", file=sys.stderr)
 
     cache[ip] = country
     return country
@@ -59,7 +59,7 @@ def translate(df: pandas.DataFrame, cache: dict[str, str]) -> pandas.DataFrame:
     """
     Translate IPs in descending order of visitionations to their
     respective country abbreviations. IPs that cant not be translated due
-    to API-call limitations should get the abbreviation "??". 
+    to API-call limitations should get the country "UNKNOWN".
     """
 
     assert list(df.columns) == [
@@ -77,7 +77,7 @@ def translate(df: pandas.DataFrame, cache: dict[str, str]) -> pandas.DataFrame:
     # amount of country rows.
     if rows - country_rows > 0:
         df.loc[df.tail(unknown_rows).index, 'anon-ip'] = df.loc[df.tail(
-            unknown_rows).index, 'anon-ip'].apply(lambda _: "??")
+            unknown_rows).index, 'anon-ip'].apply(lambda _: "UNKNOWN")
 
     df.rename(columns={'anon-ip': 'country'}, inplace=True)
 

@@ -153,7 +153,7 @@ class TestTranslation(unittest.TestCase):
                     'game': ['leanprover-community/nng4'],
                     'n': [1.0]}
 
-        expected_data = {'country': ['??'],
+        expected_data = {'country': ['UNKNOWN'],
                          'game': ['leanprover-community/nng4'],
                          'n': [1.0]}
 

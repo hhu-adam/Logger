@@ -29,12 +29,18 @@ SAVING_TIME: str = os.getenv("SAVING_TIME", "00:00")
 
 @repeat(every(MEASURING_INTERVAL_SEC).seconds)
 def measuring_job_users():
-    try:
-        with data_lock:
-            state.sec_by_sec_user_count = loc_meter.gather_sec_by_sec_measurements(state.sec_by_sec_user_count)
-    except Exception as e:
-        print(f"[measuring_job_users] Exception: {e}", flush=True)
-        traceback.print_exc()
+    #try:
+    #    with data_lock:
+    #        #state.sec_by_sec_user_count = 
+    #        loc_meter.gather_sec_by_sec_measurements()
+    #except Exception as e:
+    #    print(f"[measuring_job_users] Exception: {e}", flush=True)
+    #    traceback.print_exc()
+    loc_meter.gather_sec_by_sec_measurements()
+
+@repeat(every(15).seconds)
+def measuring_job_cpu():
+    use_meter.update_cpu_measurement()
 
 @repeat(every(MEASURING_INTERVAL_MIN).minutes)
 def measuring_job_player_retention():
@@ -44,12 +50,10 @@ def measuring_job_player_retention():
 @repeat(every(MEASURING_INTERVAL_MIN).minutes)
 def measuring_job_maximum_usage():
     with data_lock:
-        state.daily_hardware_user_log = use_meter.update_measurements(state.daily_hardware_user_log,
-                                                                state.sec_by_sec_user_count)
-        
+        state.daily_hardware_user_log = use_meter.update_measurements(state.daily_hardware_user_log)
         print(f"Hardware user logs: {state.daily_hardware_user_log}")
         # Clear aggregated user and hardware statistics
-        clear_measurements(state.sec_by_sec_user_count, "Sec by sec user measurements")
+        # clear_measurements(state.sec_by_sec_user_count, "Sec by sec user measurements")
 
 @repeat(every().day.at(SAVING_TIME))
 def saving_job():

@@ -26,12 +26,11 @@ class CpuMeter:
 
     def update_cpu_idle_percentages(self):
         average_idle_seconds_per_core_query = """
-        (
-            avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[15s]))
-        )
+        (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[15s])))
         """
 
         result_list = self.prom_con.custom_query(average_idle_seconds_per_core_query)
+        print(result_list)
         assert len(result_list) == 1, f"[UsageMeter] Expected 1 result, got {len(result_list)}"
         avg_idle_time_result = result_list[0]
 

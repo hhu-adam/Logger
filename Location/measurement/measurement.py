@@ -154,7 +154,7 @@ class LocationMeter():
         new_measurement = self.measure_access_sec_by_sec()
         #return 
         self.sec_by_sec_measurement = pandas.concat([self.sec_by_sec_measurement, new_measurement])
-        print(self.sec_by_sec_measurement)
+        #print(self.sec_by_sec_measurement)
 
     def get_max_users_over_ten_minutes(self):
         df_filter_by_time = self.sec_by_sec_measurement.copy()

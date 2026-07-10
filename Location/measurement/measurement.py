@@ -161,6 +161,7 @@ class LocationMeter():
         df_filter_by_time['Timestamp'] = pandas.to_datetime(df_filter_by_time['Timestamp'])
         last_ten_min_mask = pandas.Timestamp.now() - pandas.Timedelta(minutes=10)
         recent_df = df_filter_by_time[df_filter_by_time['Timestamp'] >= last_ten_min_mask].copy()
+        print(recent_df)
         return recent_df['Users'].max()
 
     def measure_access(self, doc_df: pandas.DataFrame) -> pandas.DataFrame:

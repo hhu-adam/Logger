@@ -36,7 +36,7 @@ def measuring_job_users():
     #except Exception as e:
     #    print(f"[measuring_job_users] Exception: {e}", flush=True)
     #    traceback.print_exc()
-    loc_meter.gather_sec_by_sec_measurements()
+    loc_meter.update_sec_by_sec_measurements()
 
 @repeat(every(15).seconds)
 def measuring_job_cpu():

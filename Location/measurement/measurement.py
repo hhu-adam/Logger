@@ -145,7 +145,7 @@ class LocationMeter():
 
         return result
 
-    def gather_sec_by_sec_measurements(self):
+    def update_sec_by_sec_measurements(self):
                                        #, gathered_measurements: pandas.DataFrame):
         """
         Take a dataframe of second by second user counts and append a new measurement to the bottom of it.
@@ -154,6 +154,7 @@ class LocationMeter():
         new_measurement = self.measure_access_sec_by_sec()
         #return 
         self.sec_by_sec_measurement = pandas.concat([self.sec_by_sec_measurement, new_measurement])
+        print(self.sec_by_sec_measurement)
 
     def get_max_users_over_ten_minutes(self):
         df_filter_by_time = self.sec_by_sec_measurement.copy()

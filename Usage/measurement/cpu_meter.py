@@ -26,7 +26,7 @@ class CpuMeter:
 
     def update_cpu_idle_percentages(self):
         average_idle_seconds_per_core_query = """
-        (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[15s])))
+        (avg by(instance) (node_cpu_seconds_total{mode="idle"})))
         """
 
         result_list = self.prom_con.custom_query(average_idle_seconds_per_core_query)

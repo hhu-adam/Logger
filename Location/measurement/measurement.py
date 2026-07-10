@@ -25,7 +25,14 @@ class LocationMeter():
         self.MEASUREMENT_COLUMNS = ['date', 'anon-ip', 'game','lang']
         self.DOCUMENTED_COLUMNS = ['anon-ip', 'game', 'n']
 
-        self.sec_by_sec_measurement = pandas.DataFrame({"Timestamp": [], "Users": []})
+        now = pandas.Timestamp.now()
+        initial_timestamps = pandas.date_range(end=now, periods=11 *60, freq="1s")
+        
+        # On start-up the measurements interval should be filled with dummy values
+        # for the last n minutes before startup, filled with the value -1. 
+        self.sec_by_sec_measurement = pandas.DataFrame({
+            "Timestamp": initial_timestamps, 
+            "Users": -1})
 
     def update_n(self, old_df: pandas.DataFrame, new_df: pandas.DataFrame) -> pandas.DataFrame:
         """
@@ -145,15 +152,25 @@ class LocationMeter():
 
         return result
 
-    def update_sec_by_sec_measurements(self):
+    def update_sec_by_sec_measurements(self, window_minutes: int = 10):
                                        #, gathered_measurements: pandas.DataFrame):
         """
         Take a dataframe of second by second user counts and append a new measurement to the bottom of it.
+        When updating the dataframe only rows within the specified time window are considered.
+        That means that anythin older then the last n minutes is removed from the dataframe while
+        the new measurement is added.
         """
-
-        new_measurement = self.measure_access_sec_by_sec()
-        #return 
+        
+        # Add new measurement to dataframe
+        new_measurement = self.measure_access_sec_by_sec() 
         self.sec_by_sec_measurement = pandas.concat([self.sec_by_sec_measurement, new_measurement])
+        
+        # Convert 'Timestamp' column to datetime objects
+        self.sec_by_sec_measurement['Timestamp'] = pandas.to_datetime(self.sec_by_sec_measurement['Timestamp'])
+        
+        time_window_mask = pandas.Timestamp.now() - pandas.Timedelta(minutes=window_minutes)
+        self.sec_by_sec_measurement = self.sec_by_sec_measurement[self.sec_by_sec_measurement['Timestamp'] >= time_window_mask]
+        print(self.sec_by_sec_measurement)
         #print(self.sec_by_sec_measurement)
 
     def get_max_users_over_ten_minutes(self):

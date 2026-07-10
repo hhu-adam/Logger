@@ -21,6 +21,7 @@ class CpuMeter:
         #)) * 100
         #"""
         
+        print(f"GET MINIMUM FROM: {self.cpu_idle_percentages}")
         max_cpu = 1 - min(self.cpu_idle_percentages)
         return max_cpu
 
@@ -35,8 +36,11 @@ class CpuMeter:
         avg_idle_time_result = result_list[0]
 
         avg_idle_time = float(avg_idle_time_result["value"][1])
+        print(f"AVG. IDLE TIME: {avg_idle_time}")
         avg_idle_perc = (avg_idle_time - self.old_avg_idle_time)/15
+        print(f"CALCULATE AVG. IDLE PERCENTAGE: ({avg_idle_time} - {self.old_avg_idle_time})/15")
         self.cpu_idle_percentages = self.cpu_idle_percentages[:-1]
         self.cpu_idle_percentages.insert(0, avg_idle_perc)
+        print(f"INSERT NEW PERCENTAGE: {self.cpu_idle_percentages}")
         assert len(self.cpu_idle_percentages) == 40, "List of CPU measuremens is not 40 anymore!"
         self.old_avg_idle_time = avg_idle_time

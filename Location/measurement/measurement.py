@@ -32,7 +32,7 @@ class LocationMeter():
         # for the last n minutes before startup, filled with the value -1. 
         self.sec_by_sec_measurement = pandas.DataFrame({
             "Timestamp": initial_timestamps, 
-            "Users": -1})
+            "Users": -1.0})
 
     def update_n(self, old_df: pandas.DataFrame, new_df: pandas.DataFrame) -> pandas.DataFrame:
         """

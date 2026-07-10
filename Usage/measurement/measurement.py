@@ -62,7 +62,9 @@ class UsageMeter:
 
     def get_measurement(self):
         max_cpu = self.cpu_meter.get_max_cpu_usage_over_last_ten_min()
+        print(f"[CPU] Max cpu: {max_cpu}")
         max_mem = self.ram_meter.get_max_ram_usage_over_ten_min()
+        print(f"[RAM] Max ram: {max_mem:.2f}%")
         # max_usr = sbs_users['Users'].max()
         max_usr = self.loc_meter.get_max_users_over_ten_minutes()
         print(f"[USERS] Max users: {max_usr}")

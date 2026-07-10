@@ -18,5 +18,5 @@ class RamMeter:
 
         instance = ram_result["metric"].get("instance", "unknown")
         max_ram = float(ram_result["value"][1])
-        print(f"[RAM] Instance: {instance} | Max usage: {max_ram:.2f}%")
+        #print(f"[RAM] Instance: {instance} | Max usage: {max_ram:.2f}%")
         return max_ram

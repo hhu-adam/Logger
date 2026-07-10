@@ -164,12 +164,14 @@ class LocationMeter():
         # Add new measurement to dataframe
         new_measurement = self.measure_access_sec_by_sec() 
         self.sec_by_sec_measurement = pandas.concat([self.sec_by_sec_measurement, new_measurement])
-        
+        print("ADDED NEW MEASUREMENT TO DATAFRAME:")
+        print(self.sec_by_sec_measurement)
         # Convert 'Timestamp' column to datetime objects
         self.sec_by_sec_measurement['Timestamp'] = pandas.to_datetime(self.sec_by_sec_measurement['Timestamp'])
         
         time_window_mask = pandas.Timestamp.now() - pandas.Timedelta(minutes=window_minutes)
         self.sec_by_sec_measurement = self.sec_by_sec_measurement[self.sec_by_sec_measurement['Timestamp'] >= time_window_mask]
+        print("SELECT MEASUREMENTS OF LAST TEN MINUTES")
         print(self.sec_by_sec_measurement)
         #print(self.sec_by_sec_measurement)
 

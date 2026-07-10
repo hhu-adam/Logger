@@ -22,7 +22,7 @@ class CpuMeter:
         #"""
         
         print(f"GET MINIMUM FROM: {self.cpu_idle_percentages}")
-        max_cpu = 100 - min(self.cpu_idle_percentages)
+        max_cpu = (1 - min(self.cpu_idle_percentages)) * 100
         return max_cpu
 
     def update_cpu_idle_percentages(self):

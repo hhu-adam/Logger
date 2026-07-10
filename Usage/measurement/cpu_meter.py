@@ -3,7 +3,7 @@ from prometheus_api_client.prometheus_connect import PrometheusConnect
 
 class CpuMeter:
     def __init__(self, prometheus_connection: PrometheusConnect) -> None:
-        self.cpu_idle_percentages = [100]*40
+        self.cpu_idle_percentages = [100.0]*40
         self.old_avg_idle_time = 0.0
         self.prom_con = prometheus_connection
 

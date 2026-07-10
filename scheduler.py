@@ -18,8 +18,8 @@ def relative_path(rel_path: str) -> str:
 
 # IPS_DOCUMENTED = relative_path('Location/logs/ip_access_meas.log')
 
-loc_meter = LocationMeter()
-use_meter = UsageMeter(location_meter=loc_meter)
+#loc_meter = LocationMeter()
+use_meter = UsageMeter()
 
 MEASURING_INTERVAL_MIN: int = int(os.getenv("MEASUREMENT_INTERVAL_MIN", "10"))
 MEASURING_INTERVAL_SEC: int = int(os.getenv("MEASUREMENT_HW_INTERVAL_SEC", "1"))
@@ -36,7 +36,7 @@ def measuring_job_users():
     #except Exception as e:
     #    print(f"[measuring_job_users] Exception: {e}", flush=True)
     #    traceback.print_exc()
-    loc_meter.update_sec_by_sec_measurements()
+    use_meter.update_usr_measurement()
 
 @repeat(every(15).seconds)
 def measuring_job_cpu():
@@ -45,12 +45,12 @@ def measuring_job_cpu():
 @repeat(every(MEASURING_INTERVAL_MIN).minutes)
 def measuring_job_player_retention():
     with data_lock:
-        state.daily_game_user_log = loc_meter.update_measurements(state.daily_game_user_log)
+        state.daily_game_user_log = use_meter.update_loc_measurement(state.daily_game_user_log)
 
 @repeat(every(MEASURING_INTERVAL_MIN).minutes)
 def measuring_job_maximum_usage():
     with data_lock:
-        state.daily_hardware_user_log = use_meter.update_measurements(state.daily_hardware_user_log)
+        state.daily_hardware_user_log = use_meter.update_hwr_measurements(state.daily_hardware_user_log)
         print(f"Hardware user logs: {state.daily_hardware_user_log}")
         # Clear aggregated user and hardware statistics
         # clear_measurements(state.sec_by_sec_user_count, "Sec by sec user measurements")

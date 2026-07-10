@@ -36,7 +36,14 @@ HOME_PAGE_GAMES = ['leanprover-community/nng4',
 
 
 class UsageMeter:
-    def __init__(self, location_meter: LocationMeter) -> None:
+    _instance = None
+
+    def __new__(cls):
+        if not cls._instance:
+            cls._instance = super(UsageMeter, cls).__new__(cls)
+        return cls._instance
+
+    def __init__(self) -> None:
         # self.API = os.environ.get("API")
         #self.HARDWARE_SCRIPT = os.environ.get("HARDWARE_SCRIPT")
         self.hardware_info_file = os.environ.get("HARDWARE_INFO_FILE")
@@ -48,9 +55,9 @@ class UsageMeter:
         #self.old_avg_idle_time = 0.0
         self.cpu_meter = CpuMeter(prometheus_connection=self.prom_con)
         self.ram_meter = RamMeter(prometheus_connection=self.prom_con)
-        self.loc_meter = location_meter
+        self.loc_meter = LocationMeter()
             
-    def update_measurements(self,
+    def update_hwr_measurements(self,
                             doc_measurements: pandas.DataFrame) -> pandas.DataFrame:
                 
         result = self.get_measurement()
@@ -59,6 +66,12 @@ class UsageMeter:
 
     def update_cpu_measurement(self):
         self.cpu_meter.update_cpu_idle_percentages()
+    
+    def update_usr_measurement(self):
+        self.loc_meter.update_sec_by_sec_measurements()
+    
+    def update_loc_measurement(self, daily_game_user_log):
+        return self.loc_meter.update_measurements(daily_game_user_log)
 
     def get_measurement(self):
         max_cpu = self.cpu_meter.get_max_cpu_usage_over_last_ten_min()

@@ -11,6 +11,5 @@ def get_latest_max_user_and_hw_measurement():
     #    if state.daily_hardware_user_log.empty:
     #        return jsonify({"error": "No data yet"}), 404
     # retrieve latest entry in dataframe
-    print(use_meter.get_measurement())
-    latest = use_meter.get_measurement().to_dict()    #state.daily_hardware_user_log.iloc[-1].to_dict()
+    latest = use_meter.get_measurement().to_dict(orient='records')[0]    #state.daily_hardware_user_log.iloc[-1].to_dict()
     return jsonify(latest)

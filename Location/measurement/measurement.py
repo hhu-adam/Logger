@@ -174,12 +174,12 @@ class LocationMeter():
         #print(self.sec_by_sec_measurement)
 
     def get_max_users_over_ten_minutes(self):
-        df_filter_by_time = self.sec_by_sec_measurement.copy()
-        df_filter_by_time['Timestamp'] = pandas.to_datetime(df_filter_by_time['Timestamp'])
-        last_ten_min_mask = pandas.Timestamp.now() - pandas.Timedelta(minutes=10)
-        recent_df = df_filter_by_time[df_filter_by_time['Timestamp'] >= last_ten_min_mask].copy()
-        print(recent_df)
-        return recent_df['Users'].max()
+        #df_filter_by_time = self.sec_by_sec_measurement.copy()
+        #df_filter_by_time['Timestamp'] = pandas.to_datetime(df_filter_by_time['Timestamp'])
+        #last_ten_min_mask = pandas.Timestamp.now() - pandas.Timedelta(minutes=10)
+        #recent_df = df_filter_by_time[df_filter_by_time['Timestamp'] >= last_ten_min_mask].copy()
+        #print(recent_df)
+        return self.sec_by_sec_measurement['Users'].max()
 
     def measure_access(self, doc_df: pandas.DataFrame) -> pandas.DataFrame:
         """

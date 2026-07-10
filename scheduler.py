@@ -19,7 +19,7 @@ def relative_path(rel_path: str) -> str:
 # IPS_DOCUMENTED = relative_path('Location/logs/ip_access_meas.log')
 
 loc_meter = LocationMeter()
-use_meter = UsageMeter()
+use_meter = UsageMeter(location_meter=loc_meter)
 
 MEASURING_INTERVAL_MIN: int = int(os.getenv("MEASUREMENT_INTERVAL_MIN", "10"))
 MEASURING_INTERVAL_SEC: int = int(os.getenv("MEASUREMENT_HW_INTERVAL_SEC", "1"))

@@ -36,7 +36,7 @@ HOME_PAGE_GAMES = ['leanprover-community/nng4',
 
 
 class UsageMeter:
-    def __init__(self) -> None:
+    def __init__(self, location_meter: LocationMeter) -> None:
         # self.API = os.environ.get("API")
         #self.HARDWARE_SCRIPT = os.environ.get("HARDWARE_SCRIPT")
         self.hardware_info_file = os.environ.get("HARDWARE_INFO_FILE")
@@ -48,7 +48,7 @@ class UsageMeter:
         #self.old_avg_idle_time = 0.0
         self.cpu_meter = CpuMeter(prometheus_connection=self.prom_con)
         self.ram_meter = RamMeter(prometheus_connection=self.prom_con)
-        self.loc_meter = LocationMeter()
+        self.loc_meter = location_meter
             
     def update_measurements(self,
                             doc_measurements: pandas.DataFrame) -> pandas.DataFrame:

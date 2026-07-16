@@ -1,14 +1,19 @@
 module.exports = {
   apps : [{
     name   : "logger",
-    script : "./scheduler.py", 
+    script : "./main.py", 
     interpreter : "./env/bin/python3",
     env: {
         IPS_LOG: "",
         API: "",
+        HARDWARE_SCRIPT: "",
+        HARDWARE_INFO_FILE: "",
+        CPU_SCRIPT: "",
         IPINFO_TOKEN: "",
-        MEASUREMENT_INTERVAL_MIN: 10,
-        TRANSLATION_TIME: "00:00:00",
+        MEASUREMENT_INTERVAL_MIN: 0,
+        MEASUREMENT_HW_INTERVAL_SEC: 0,
+        TRANSLATION_TIME: "00:00",
+        SAVING_TIME: "00:00",
         ACTIVITY_API: "",
         ACTIVITY_REPORT_TIME: "",
         ACTIVITY_REPORT: "Activity/logs/activity-status.json",

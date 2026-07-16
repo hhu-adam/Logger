@@ -15,93 +15,74 @@ import requests
 
 from io import StringIO
 
+from Location.measurement.measurement import LocationMeter
+from Usage.measurement.cpu_meter import CpuMeter
+from Usage.measurement.ram_meter import RamMeter
+
+HOME_PAGE_GAMES = ['leanprover-community/nng4',
+                   'hhu-adam/robo',
+                   'djvelleman/stg4',
+                   'trequetrum/lean4game-logic',
+                   'jadabouhawili/knightsandknaves-lean4game']
+
+#MEASUREMENT_COLUMNS = ['date', 
+#                       'anon-ip', 
+#                       'game',
+#                       'lang']
+
+#HW_COLUMNS = ['Timestamp', 
+#              'CPU', 
+#              'MEM']
+
 
 class UsageMeter:
+    _instance = None
+
+    def __new__(cls):
+        if not cls._instance:
+            cls._instance = super(UsageMeter, cls).__new__(cls)
+        return cls._instance
+
     def __init__(self) -> None:
-        self.API = os.environ.get("API")
-        self.HARDWARE_SCRIPT = os.environ.get("HARDWARE_SCRIPT")
+        # self.API = os.environ.get("API")
+        #self.HARDWARE_SCRIPT = os.environ.get("HARDWARE_SCRIPT")
         self.hardware_info_file = os.environ.get("HARDWARE_INFO_FILE")
-        self.HOME_PAGE_GAMES = ['leanprover-community/nng4',
-                        'hhu-adam/robo',
-                        'djvelleman/stg4',
-                        'trequetrum/lean4game-logic',
-                        'jadabouhawili/knightsandknaves-lean4game']
-        self.MEASUREMENT_COLUMNS = ['date', 'anon-ip', 'game','lang']
-        self.HW_COLUMNS = ['Timestamp', 'CPU', 'MEM']
-        self.DOCUMENTED_COLUMNS = ['timestamp', 'num_useres', 'cpu', 'ram']
-
         self.prom_con = PrometheusConnect(url="http://localhost:9090", disable_ssl=True)
-    
-    def get_max_ram_usage_over_ten_min(self) -> float:
-        ram_query = """
-        (1 - min_over_time(
-            (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)
-            [10m:]
-        )) * 100
-        """
-
-        result_list = self.prom_con.custom_query(ram_query)
-        assert len(result_list) == 1, f"[UsageMeter] Expected 1 result, got {len(result_list)}"
-        ram_result = result_list[0]
-
-        instance = ram_result["metric"].get("instance", "unknown")
-        max_ram = float(ram_result["value"][1])
-        print(f"[RAM] Instance: {instance} | Max usage: {max_ram:.2f}%")
-        return max_ram
-    
-    def get_max_cpu_usage_over_ten_min(self) -> float:
-        # 1) Count the amount of seconds each CPU is in idle-mode
-        # 2) Compute with rate the idle-fraction per core, smoothed over a minute
-        # 3) Average the idle-rates over all cores
-        # 4) Compile minimum average idle-rate of the last then minutes
-        # 5) Subtract minimum average idle-rate from 1 and multiply by 100 
-        # to get maximum average usage for the last ten minutes
-        cpu_query = """
-        (1 - min_over_time(
-            avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[1m]))
-            [10m:]
-        )) * 100
-        """
-
-        result_list = self.prom_con.custom_query(cpu_query)
-        assert len(result_list) == 1, f"[UsageMeter] Expected 1 result, got {len(result_list)}"
-        cpu_result = result_list[0]
-
-        instance = cpu_result["metric"].get("instance", "unknown")
-        max_cpu = float(cpu_result["value"][1])
-        print(f"[CPU] Instance: {instance} | Max usage: {max_cpu:.2f}%")
-        return max_cpu
-
-    def get_measurement(self) -> dict:
-        """
-        Call hardware usage script and save values to dict.
-        """
-        assert len(self.HARDWARE_SCRIPT) != 0, "Please set environment variable for the hardware script"
-        usage: str = subprocess.check_output(['sh', self.HARDWARE_SCRIPT]).decode('UTF-8')
-        usage_measurement: pandas.DataFrame = pandas.read_csv(StringIO(usage), sep=',')
-        usage_measurement.insert(0, 'Timestamp', pandas.to_datetime('now').replace(microsecond=0))
-        # Remove leading space from MEM column name
-        usage_measurement.columns = usage_measurement.columns.str.lstrip()
-        return usage_measurement
-
-    def measure_hardware(self, gathered_measurements: pandas.DataFrame):
-        """
-        Take a dataframe of second by second hardware measurements and append a new meausre
-        meant to the bottom of it.
-        """
-        assert list(gathered_measurements.columns) == self.HW_COLUMNS, f"Columns of DataFrame must be {self.HW_COLUMNS} but were {gathered_measurements.columns}"
-        new_measurement = self.get_measurement()
-        return pandas.concat([gathered_measurements, new_measurement])
-    
-    def update_measurements(self,
-                            doc_measurements: pandas.DataFrame, 
-                            sbs_users: pandas.DataFrame) -> pandas.DataFrame:
+        # Zero-initialize list of 40 15-sec idle measurements
+        # this list corresponds to all idle percentages over the 
+        # last ten minutes.
+        #self.cpu_idle_percentages = [0.0]*40
+        #self.old_avg_idle_time = 0.0
+        self.cpu_meter = CpuMeter(prometheus_connection=self.prom_con)
+        self.ram_meter = RamMeter(prometheus_connection=self.prom_con)
+        self.loc_meter = LocationMeter()
+            
+    def update_hwr_measurements(self,
+                            doc_measurements: pandas.DataFrame) -> pandas.DataFrame:
                 
-        max_cpu = self.get_max_cpu_usage_over_ten_min()
-        max_mem = self.get_max_ram_usage_over_ten_min()
-        max_usr = sbs_users['Users'].max()
+        result = self.get_measurement()
+        print(f"[{datetime.datetime.now()}] Updated user-hardware log.")
+        return pandas.concat([doc_measurements, result])
+
+    def update_cpu_measurement(self):
+        self.cpu_meter.update_cpu_idle_percentages()
+    
+    def update_usr_measurement(self):
+        self.loc_meter.update_sec_by_sec_measurements()
+    
+    def update_loc_measurement(self, daily_game_user_log):
+        return self.loc_meter.update_measurements(daily_game_user_log)
+
+    def get_measurement(self):
+        max_cpu = self.cpu_meter.get_max_cpu_usage_over_last_ten_min()
+        print(f"[CPU] Max cpu: {max_cpu}")
+        max_mem = self.ram_meter.get_max_ram_usage_over_ten_min()
+        print(f"[RAM] Max ram: {max_mem:.2f}%")
+        # max_usr = sbs_users['Users'].max()
+        max_usr = self.loc_meter.get_max_users_over_ten_minutes()
         print(f"[USERS] Max users: {max_usr}")
         timestamp = self.get_timestamp_now()
+        print(f"Timestamp: {timestamp}")
 
         result = pandas.DataFrame({'Timestamp': [timestamp],
                                    'Max_usr': [max_usr],
@@ -109,15 +90,7 @@ class UsageMeter:
                                    'Max_mem': [max_mem]})
         
         result = self.apply_measurement_dtypes(result)
-
-        assert self.hardware_info_file is not None, "[UsageMeter] please specify file where to save current hardware measures!"
-        
-        with open(self.hardware_info_file, 'w') as filetowrite:
-            filetowrite.write(result.to_csv())
-
-        print(f"[{datetime.datetime.now()}] Updated user-hardware log.")
-
-        return pandas.concat([doc_measurements, result])
+        return result
     
     
     def apply_measurement_dtypes(self, dataframe: pandas.DataFrame):
@@ -132,8 +105,9 @@ class UsageMeter:
     def get_timestamp_now(self) -> str:
         return pandas.to_datetime('now').strftime("%y-%m-%d %H:%M:%S")
     
+
     def add_timestamp(self,dataframe: pandas.DataFrame):
-        dataframe.insert(0, 'Timestamp', self.get_timestamp_now)
+        dataframe.insert(0, 'Timestamp', self.get_timestamp_now())
         return dataframe
 
 

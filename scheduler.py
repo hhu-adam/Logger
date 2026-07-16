@@ -1,7 +1,8 @@
 import sys
-import time
 import os
 import pandas
+import traceback
+
 from datetime import datetime, timedelta
 from schedule import every, repeat, run_pending
 from Location.measurement.measurement import LocationMeter
@@ -9,6 +10,7 @@ from Location.translation.translation import create_translation
 from Usage.measurement.measurement import UsageMeter
 from Activity.status_report import update_status_report, write_report
 from Activity.cleanup import fetch_open_session_games, parse_protected_games, run_game_cleanup
+from state import data_lock, state
 
 def relative_path(rel_path: str) -> str:
     script_path = os.path.abspath(__file__)
@@ -17,25 +19,13 @@ def relative_path(rel_path: str) -> str:
 
 
 # IPS_DOCUMENTED = relative_path('Location/logs/ip_access_meas.log')
-daily_game_user_log: pandas.DataFrame = pandas.DataFrame({"anon-ip": [], 
-                                                          "game": [], 
-                                                          "n": []})
-daily_hardware_user_log: pandas.DataFrame = pandas.DataFrame({"Timestamp": [], 
-                                                          "Max_usr": [], 
-                                                          "Max_cpu": [],
-                                                          "Max_mem": []})
-sec_by_sec_hw_usage: pandas.DataFrame = pandas.DataFrame({"Timestamp": [],
-                                                           "CPU": [],
-                                                           "MEM": []})
-sec_by_sec_user_count: pandas.DataFrame = pandas.DataFrame({"Timestamp": [],
-                                                           "Users": []})
 
-loc_meter = LocationMeter()
+# loc_meter = LocationMeter()
 use_meter = UsageMeter()
-MEASURING_INTERVAL_MIN: int = int(os.getenv("MEASUREMENT_INTERVAL_MIN"))
-MEASURING_INTERVAL_SEC: int = int(os.getenv("MEASUREMENT_HW_INTERVAL_SEC"))
-TRANSLATION_TIME: str = os.getenv("TRANSLATION_TIME")
-SAVING_TIME: str = os.getenv("SAVING_TIME")
+MEASURING_INTERVAL_MIN: int = int(os.getenv("MEASUREMENT_INTERVAL_MIN", "10"))
+MEASURING_INTERVAL_SEC: int = int(os.getenv("MEASUREMENT_HW_INTERVAL_SEC", "1"))
+TRANSLATION_TIME: str = os.getenv("TRANSLATION_TIME", "00:00")
+SAVING_TIME: str = os.getenv("SAVING_TIME", "00:00")
 ACTIVITY_API: str | None = os.getenv("ACTIVITY_API")
 ACTIVITY_REPORT_TIME: str | None = os.getenv("ACTIVITY_REPORT_TIME")
 ACTIVITY_REPORT: str = os.getenv(
@@ -52,66 +42,67 @@ CLEANUP_REPORT: str = os.getenv(
     "CLEANUP_REPORT", relative_path("Activity/logs/cleanup-status.json")
 )
 
-@repeat(every(MEASURING_INTERVAL_SEC).seconds)
-def measuring_job_hardware():
-    global sec_by_sec_hw_usage
-    #use_meter.get_max_cpu_usage_over_ten_min()
-    #use_meter.get_max_ram_usage_over_ten_min()
-    sec_by_sec_hw_usage = use_meter.measure_hardware(sec_by_sec_hw_usage)
 
 @repeat(every(MEASURING_INTERVAL_SEC).seconds)
 def measuring_job_users():
-    global sec_by_sec_user_count
-    sec_by_sec_user_count = loc_meter.gather_sec_by_sec_measurements(sec_by_sec_user_count)
+    #try:
+    #    with data_lock:
+    #        #state.sec_by_sec_user_count = 
+    #        loc_meter.gather_sec_by_sec_measurements()
+    #except Exception as e:
+    #    print(f"[measuring_job_users] Exception: {e}", flush=True)
+    #    traceback.print_exc()
+    use_meter.update_usr_measurement()
+
+@repeat(every(15).seconds)
+def measuring_job_cpu():
+    use_meter.update_cpu_measurement()
 
 @repeat(every(MEASURING_INTERVAL_MIN).minutes)
 def measuring_job_player_retention():
-    global daily_game_user_log
-    daily_game_user_log = loc_meter.update_measurements(daily_game_user_log)
+    with data_lock:
+        state.daily_game_user_log = use_meter.update_loc_measurement(state.daily_game_user_log)
 
 @repeat(every(MEASURING_INTERVAL_MIN).minutes)
 def measuring_job_maximum_usage():
-    global daily_hardware_user_log
-    daily_hardware_user_log = use_meter.update_measurements(daily_hardware_user_log,
-                                                            sec_by_sec_user_count)
-    
-    print(f"Hardware user logs: {daily_hardware_user_log}")
-    # Clear aggregated user and hardware statistics
-    clear_measurements(sec_by_sec_user_count, "Sec by sec user measurements")
-    clear_measurements(sec_by_sec_hw_usage, "Sec by sec hardware measurements")
+    with data_lock:
+        state.daily_hardware_user_log = use_meter.update_hwr_measurements(state.daily_hardware_user_log)
+        print(f"Hardware user logs: {state.daily_hardware_user_log}")
+        # Clear aggregated user and hardware statistics
+        # clear_measurements(state.sec_by_sec_user_count, "Sec by sec user measurements")
 
 @repeat(every().day.at(SAVING_TIME))
 def saving_job():
-    global daily_hardware_user_log
-    print("Start: Saving")
-    log_date = datetime.today() - timedelta(days=1)
-    save_path = relative_path(
-        f"Usage/logs/usage-{log_date.strftime('%Y-%m-%d')}.log")
-    
-    daily_hardware_user_log.to_csv(save_path)
+    with data_lock:
+        print("Start: Saving")
+        log_date = datetime.today() - timedelta(days=1)
+        save_path = relative_path(
+            f"Usage/logs/usage-{log_date.strftime('%Y-%m-%d')}.log")
+        
+        state.daily_hardware_user_log.to_csv(save_path)
 
-    clear_measurements(daily_hardware_user_log, "Daily hardware-user measurements")
+        clear_measurements(state.daily_hardware_user_log, "Daily hardware-user measurements")
 
 @repeat(every().day.at(TRANSLATION_TIME))
 def translating_job():
-    global daily_game_user_log
-    print("Start: Translating")
-    translated = False
-    log_date = datetime.today() - timedelta(days=1)
-    translation_path = relative_path(
-        f"Location/logs/locations-{log_date.strftime('%Y-%m-%d')}.log")
-    
-    try:
-        create_translation(daily_game_user_log, translation_path)
-        translated = True
-    except FileNotFoundError as e:
-        print(
-            f"[{datetime.now()}] - Exception during translation: {e}", file=sys.stderr)
-    except Exception as e:
-        print(f"[{datetime.now()}] - Undefined exception during translation: {e}", file=sys.stderr)
+    with data_lock:
+        print("Start: Translating")
+        translated = False
+        log_date = datetime.today() - timedelta(days=1)
+        translation_path = relative_path(
+            f"Location/logs/locations-{log_date.strftime('%Y-%m-%d')}.log")
+        
+        try:
+            create_translation(state.daily_game_user_log, translation_path)
+            translated = True
+        except FileNotFoundError as e:
+            print(
+                f"[{datetime.now()}] - Exception during translation: {e}", file=sys.stderr)
+        except Exception as e:
+            print(f"[{datetime.now()}] - Undefined exception during translation: {e}", file=sys.stderr)
 
-    if translated:
-        clear_measurements(daily_game_user_log, "Daily measurements")
+        if translated:
+            clear_measurements(state.daily_game_user_log, "Daily measurements")
 
 def clear_measurements(doc_df: pandas.DataFrame, message: str) -> None:
     # f = open(ips_documented, 'r+', encoding="utf_8")
@@ -148,8 +139,3 @@ def activity_job():
 
 if ACTIVITY_API and ACTIVITY_REPORT_TIME:
     every().day.at(ACTIVITY_REPORT_TIME).do(activity_job)
-
-
-while True:
-    run_pending()
-    time.sleep(1)

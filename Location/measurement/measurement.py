@@ -25,6 +25,15 @@ class LocationMeter():
         self.MEASUREMENT_COLUMNS = ['date', 'anon-ip', 'game','lang']
         self.DOCUMENTED_COLUMNS = ['anon-ip', 'game', 'n']
 
+        now = pandas.Timestamp.now()
+        initial_timestamps = pandas.date_range(end=now, periods=11 *60, freq="1s")
+        
+        # On start-up the measurements interval should be filled with dummy values
+        # for the last n minutes before startup, filled with the value -1. 
+        self.sec_by_sec_measurement = pandas.DataFrame({
+            "Timestamp": initial_timestamps, 
+            "Users": -1.0})
+
     def update_n(self, old_df: pandas.DataFrame, new_df: pandas.DataFrame) -> pandas.DataFrame:
         """
         Update n values by joining dataframes wrt. ip and game and
@@ -122,7 +131,7 @@ class LocationMeter():
     def measure_access_sec_by_sec(self) -> pandas.DataFrame:
         """
         Measure each individual game-ip combination and sum them up as the number
-        of current users in during the moment of measurement.
+        of current users during the moment of measurement.
         """
         datatype_map = {'anon-ip': 'object','game': 'object','n': 'int64'}
         measurement = self.get_measurement()
@@ -143,13 +152,38 @@ class LocationMeter():
 
         return result
 
-    def gather_sec_by_sec_measurements(self, gathered_measurements: pandas.DataFrame):
+    def update_sec_by_sec_measurements(self, window_minutes: int = 10):
+                                       #, gathered_measurements: pandas.DataFrame):
         """
         Take a dataframe of second by second user counts and append a new measurement to the bottom of it.
+        When updating the dataframe only rows within the specified time window are considered.
+        That means that anythin older then the last n minutes is removed from the dataframe while
+        the new measurement is added.
         """
+        
+        # Add new measurement to dataframe
+        new_measurement = self.measure_access_sec_by_sec() 
+        self.sec_by_sec_measurement = pandas.concat([self.sec_by_sec_measurement, new_measurement])
+        #print("ADDED NEW MEASUREMENT TO DATAFRAME:")
+        #print(self.sec_by_sec_measurement)
+        # Convert 'Timestamp' column to datetime objects
+        self.sec_by_sec_measurement['Timestamp'] = pandas.to_datetime(self.sec_by_sec_measurement['Timestamp'])
+        
+        time_window_mask = pandas.Timestamp.now() - pandas.Timedelta(minutes=window_minutes)
+        self.sec_by_sec_measurement = self.sec_by_sec_measurement[self.sec_by_sec_measurement['Timestamp'] >= time_window_mask]
+        #print("SELECT MEASUREMENTS OF LAST TEN MINUTES")
+        #print(self.sec_by_sec_measurement)
+        #print(self.sec_by_sec_measurement)
 
-        new_measurement = self.measure_access_sec_by_sec()
-        return pandas.concat([gathered_measurements, new_measurement])
+    def get_max_users_over_ten_minutes(self):
+        #df_filter_by_time = self.sec_by_sec_measurement.copy()
+        #df_filter_by_time['Timestamp'] = pandas.to_datetime(df_filter_by_time['Timestamp'])
+        #last_ten_min_mask = pandas.Timestamp.now() - pandas.Timedelta(minutes=10)
+        #recent_df = df_filter_by_time[df_filter_by_time['Timestamp'] >= last_ten_min_mask].copy()
+        #print(recent_df)
+        #print("PULL MAX. FROM FOLLOWING MEASUREMENTS:")
+        #print(self.sec_by_sec_measurement)
+        return self.sec_by_sec_measurement['Users'].max()
 
     def measure_access(self, doc_df: pandas.DataFrame) -> pandas.DataFrame:
         """

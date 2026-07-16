@@ -4,3 +4,4 @@ env/
 **/__pycache__/
 Activity/logs/
 local_ecosystem.config.js
+.vscode/

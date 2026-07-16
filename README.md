@@ -32,3 +32,6 @@ Activity/logs/cleanup-status.json
 ```
 
 The Logger skips protected games, currently open games, invalid paths, symlinks, and missing folders.
+
+## Prometheus
+[TODO]

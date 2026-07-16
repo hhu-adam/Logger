@@ -16,14 +16,39 @@ def _ip_to_country(ip: str, cache: dict[str, str]) -> str:
     During script execution translated IPs are cached to minimize API-calls.
     """
 
-    if cache.get(ip) == None:
-        location = requests.get(f"https://ipinfo.io/{ip}")
-        assert location.status_code == 200, print(f"[{datetime.datetime.now()}] Received failing status code: {location.status_code} for IP {ip}", file=sys.stderr)
-        country = location.json().get('country', "UNKNOWN")
-        cache[ip] = country
-        return country
-    else:
+    if cache.get(ip) != None:
         return cache.get(ip)
+
+    country = "UNKNOWN"
+    token = os.environ.get("IPINFO_TOKEN")
+
+    for attempt in range(2):
+        try:
+            if token:
+                location = requests.get(
+                    f"https://api.ipinfo.io/lite/{ip}/country_code",
+                    params={"token": token},
+                    timeout=10,
+                )
+            else:
+                location = requests.get(f"https://ipinfo.io/{ip}", timeout=10)
+
+            if location.status_code == 200:
+                if token:
+                    country = location.text.strip() or "UNKNOWN"
+                else:
+                    country = location.json().get('country', "UNKNOWN")
+                break
+
+            print(f"[{datetime.datetime.now()}] - Received bad status code {location.status_code} from IP {ip}", file=sys.stderr)
+        except requests.RequestException as e:
+            print(f"[{datetime.datetime.now()}] - Exception during IP lookup for {ip}: {e}", file=sys.stderr)
+
+        if attempt == 1:
+            print(f"[{datetime.datetime.now()}] - Could not translate IP {ip}; using UNKNOWN", file=sys.stderr)
+
+    cache[ip] = country
+    return country
 
 
 def _sort_by_n(df: pandas.DataFrame) -> pandas.DataFrame:
@@ -34,7 +59,7 @@ def translate(df: pandas.DataFrame, cache: dict[str, str]) -> pandas.DataFrame:
     """
     Translate IPs in descending order of visitionations to their
     respective country abbreviations. IPs that cant not be translated due
-    to API-call limitations should get the abbreviation "??". 
+    to API-call limitations should get the country "UNKNOWN".
     """
 
     assert list(df.columns) == [
@@ -52,7 +77,7 @@ def translate(df: pandas.DataFrame, cache: dict[str, str]) -> pandas.DataFrame:
     # amount of country rows.
     if rows - country_rows > 0:
         df.loc[df.tail(unknown_rows).index, 'anon-ip'] = df.loc[df.tail(
-            unknown_rows).index, 'anon-ip'].apply(lambda: "??")
+            unknown_rows).index, 'anon-ip'].apply(lambda _: "UNKNOWN")
 
     df.rename(columns={'anon-ip': 'country'}, inplace=True)
 

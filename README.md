@@ -39,6 +39,9 @@ The Logger skips protected games, currently open games, invalid paths, symlinks,
 
 Usage statistics are collected every ten minutes and represent information
 concerning maximal CPU and RAM usage as well as the maximal number of simultaneously active players over that time frame.
+The logic aggregating these measurements can be found in its dedicated [class](./Usage/measurement/measurement.py).
+These measurements are available to be retrieved by Lean4Game via [API](./api.py) and saved locally via a dedicated
+job in the [scheduler](./scheduler.py).
 
 ### Hardware usage statistics
 

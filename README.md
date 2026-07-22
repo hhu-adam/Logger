@@ -66,7 +66,11 @@ where both MemAvailable and MemTotal are values provided by node-exporter and th
 
 #### CPU usage
 
-Maximal CPU usage is calulated using a moving window approach. A window of 40 measurements is fixed, that contains the average percentage of idle-time over all the systems CPUs measured in 15 min intervals. The maximal CPU usage is therefore calculated by choosing the minimum of these measurements and subtracting it from one.
+Maximal CPU usage is calulated using a moving window approach. A window of 40 measurements is fixed, that contains the average percentage of idle-time over all the systems CPUs measured in 15 min intervals. The maximal CPU usage is therefore calculated by choosing the minimum of these measurements and subtracting it from one. More precisely, a single measurement of average CPU idleness for a point in time $t$ is computed as:
+
+```math
+I_0 = avg_{\text{CPUs}}(\frac{idle_{t} - idle_{t-15}}{15})
+```
 
 ### Maximum player number statistics
 

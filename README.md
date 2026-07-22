@@ -10,6 +10,10 @@ It does two things:
 ## Location statistics
 
 The Logger reads the Lean4Game sessions API and stores daily country/game statistics.
+The logic for aggregating statistics is located in the [LocationMeter](./Location/measurement/measurement.py) class. [LocationMeter](./Location/measurement/measurement.py) aims to provide estimates for daily playtime 
+of games w.r.t. the players home country. This is done by aggregating information concerning anonymized player IPs as well as their currently accessed game session. This information is provided via API by Lean4Game.
+
+The aggregated [LocationMeter](./Location/measurement/measurement.py) data is translated at a specified time by a job defined in the [scheduler](./scheduler.py). Currently, translations are performed once a day, translating anonymized IPs into country abbreviations. The translations is performed by calling the [ipinfo](https://ipinfo.io/) API for each persisted anonymized IP.
 
 ## Activity statistics
 

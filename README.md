@@ -61,3 +61,14 @@ The maximal RAM usage over the last ten minutes is computed in [RAM](./Usage/mea
 ```math
 1 - \min_{10min}(\frac{\text{MemAvailable}}{\text{MemTotal}})
 ```
+
+where both MemAvailable and MemTotal are values provided by node-exporter and the underlying Linux kernel.
+
+#### CPU usage
+
+Maximal CPU usage is calulated using a moving window approach. A window of 40 measurements is fixed, that contains the average percentage of idle-time over all the systems CPUs measured in 15 min intervals. The maximal CPU usage is therefore calculated by choosing the minimum of these measurements and subtracting it from one.
+
+### Maximum player number statistics
+
+The Usage meter integrates an instance of the [LocationMeter](./Location/measurement/measurement.py) class calling a dedicated method to retrieve the maximum
+number of players of the current aggregated measurement.

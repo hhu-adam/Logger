@@ -98,11 +98,12 @@ def update_n(old_df: pandas.DataFrame, new_df: pandas.DataFrame) -> pandas.DataF
     return old_df
 
 
-def write_translation_log(ip_df: pandas.DataFrame, log_path: str, cache: dict[str, str]) -> None:
+def write_translation_log(ip_df: pandas.DataFrame, log_path: str, cache: dict[str, str]) -> pandas.DataFrame:
     # os.stat(log_path).st_size == 0 or not os.path.exists(log_path):
     if not os.path.exists(log_path):
         df = extract_usage_statistics(ip_df, cache)
         df.to_csv(log_path, sep=';', index=False)
+        return df
     else:
         try:
             t_df = pandas.read_csv(log_path, delimiter=';', index_col=False)
@@ -111,6 +112,7 @@ def write_translation_log(ip_df: pandas.DataFrame, log_path: str, cache: dict[st
             
         updated_df = update_usage_statistics(ip_df, t_df, cache)
         updated_df.to_csv(log_path, sep=';', index=False)
+        return updated_df
 
 
 def update_usage_statistics(m_df: pandas.DataFrame, t_df: pandas.DataFrame, cache: dict[str, str]) -> pandas.DataFrame:
@@ -128,14 +130,15 @@ def extract_usage_statistics(m_df: pandas.DataFrame, cache: dict[str, str]) -> p
     return _sort_by_n(new_t_df)
 
 
-def create_translation(doc_df: pandas.DataFrame, path_translated_ips: str) -> None:
+def create_translation(doc_df: pandas.DataFrame, path_translated_ips: str) -> pandas.DataFrame:
     # if not os.path.exists(doc_df):
     #    raise FileNotFoundError("No measurements available to translate!")
 
     cache = {}
     # ip_df = pandas.read_csv(doc_df, delimiter=';', index_col=False)
-    write_translation_log(doc_df, path_translated_ips, cache)
+    translated = write_translation_log(doc_df, path_translated_ips, cache)
     print(f"[{datetime.datetime.now()}] Measurements translated into: {path_translated_ips}")
+    return translated
 
 
 def clear_daily_measurements(doc_df: pandas.DataFrame) -> None:

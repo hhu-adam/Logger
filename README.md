@@ -88,3 +88,22 @@ I_t = avg_{\text{CPUs}}(\frac{idle_{t} - idle_{t-15}}{15})
 
 The Usage meter integrates an instance of the [LocationMeter](./Location/measurement/measurement.py) class calling a dedicated method to retrieve the maximum
 number of players of the current aggregated measurement.
+
+## Prometheus and Grafana
+
+Logger exposes a read-only Prometheus endpoint for Lean4Game operational data.
+It is separate from the local Flask API and binds to `127.0.0.1:8078` by default.
+
+| Environment variable | Default | Purpose |
+| --- | --- | --- |
+| `LOGGER_METRICS_HOST` | `127.0.0.1` | Interface for the Prometheus endpoint. |
+| `LOGGER_METRICS_PORT` | `8078` | Port for the Prometheus endpoint. |
+
+The endpoint exports aggregated data only: peak player/CPU/RAM measurements,
+job timing and failures, game lifecycle and cleanup outcomes, and country/game
+session observations. It never exports anonymized IP addresses.
+
+For the existing Docker-based Prometheus deployment, configure a controlled
+container-to-host route and add Logger as a scrape target. Do not expose the
+metrics endpoint publicly. Grafana can then display the Logger metrics next to
+the existing node-exporter host-health dashboard.

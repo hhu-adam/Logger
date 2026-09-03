@@ -24,7 +24,9 @@ module.exports = {
         SESSIONS_API: "",
         GAME_PROTECTED_REPOS: "",
         GAME_TRASH_RETENTION_DAYS: 7,
-        CLEANUP_REPORT: "Activity/logs/cleanup-status.json"
+        CLEANUP_REPORT: "Activity/logs/cleanup-status.json",
+        LOGGER_METRICS_HOST: "127.0.0.1",
+        LOGGER_METRICS_PORT: 8078
     }
   }]
 }

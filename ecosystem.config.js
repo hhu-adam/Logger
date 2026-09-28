@@ -16,6 +16,7 @@ module.exports = {
         SAVING_TIME: "00:00",
         ACTIVITY_API: "",
         ACTIVITY_REPORT_TIME: "",
+        ACTIVITY_REFRESH_INTERVAL_MIN: 5,
         ACTIVITY_REPORT: "Activity/logs/activity-status.json",
         GAME_INACTIVE_AFTER_DAYS: 60,
         GAME_DELETION_GRACE_DAYS: 30,

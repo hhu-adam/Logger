@@ -45,6 +45,12 @@ Activity/logs/activity-status.json
 Activity/logs/cleanup-status.json
 ```
 
+When `ACTIVITY_API` is configured, Logger refreshes game activity and its
+Prometheus lifecycle metrics every five minutes by default. Set
+`ACTIVITY_REFRESH_INTERVAL_MIN` to change that interval. Cleanup candidates
+are still evaluated once per day at `ACTIVITY_REPORT_TIME`; refreshing activity
+does not move or delete games.
+
 The Logger skips protected games, currently open games, invalid paths, symlinks, and missing folders.
 
 ## Usage statistics (Prometheus-based)

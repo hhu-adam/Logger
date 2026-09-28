@@ -29,6 +29,7 @@ TRANSLATION_TIME: str = os.getenv("TRANSLATION_TIME", "00:00")
 SAVING_TIME: str = os.getenv("SAVING_TIME", "00:00")
 ACTIVITY_API: str | None = os.getenv("ACTIVITY_API")
 ACTIVITY_REPORT_TIME: str | None = os.getenv("ACTIVITY_REPORT_TIME")
+ACTIVITY_REFRESH_INTERVAL_MIN: int = int(os.getenv("ACTIVITY_REFRESH_INTERVAL_MIN", "5"))
 ACTIVITY_REPORT: str = os.getenv(
     "ACTIVITY_REPORT", relative_path("Activity/logs/activity-status.json")
 )
@@ -43,6 +44,8 @@ CLEANUP_REPORT: str = os.getenv(
     "CLEANUP_REPORT", relative_path("Activity/logs/cleanup-status.json")
 )
 metrics.cleanup_enabled.set(1 if GAME_CLEANUP_ENABLED else 0)
+if ACTIVITY_REFRESH_INTERVAL_MIN < 1:
+    raise ValueError("ACTIVITY_REFRESH_INTERVAL_MIN must be at least 1")
 
 
 @repeat(every(MEASURING_INTERVAL_SEC).seconds)
@@ -103,18 +106,33 @@ def clear_measurements(doc_df: pandas.DataFrame, message: str) -> None:
     doc_df.drop(doc_df.index, inplace=True)
     print(f"[{datetime.now()}] {message} cleared from DataFrame: {doc_df}")
 
+def update_activity_metrics():
+    status_report = update_status_report(
+        ACTIVITY_API,
+        ACTIVITY_REPORT,
+        GAME_INACTIVE_AFTER_DAYS,
+        GAME_DELETION_GRACE_DAYS,
+    )
+    metrics.record_activity_report(status_report)
+    return status_report
+
+
+def activity_refresh_job():
+    if not ACTIVITY_API:
+        return
+    try:
+        with metrics.observe_job("game_activity_refresh"):
+            update_activity_metrics()
+    except Exception as e:
+        print(f"[{datetime.now()}] - Activity refresh failed: {e}", file=sys.stderr)
+
+
 def activity_job():
     if not ACTIVITY_API:
         return
     try:
         with metrics.observe_job("game_cleanup"):
-            status_report = update_status_report(
-                ACTIVITY_API,
-                ACTIVITY_REPORT,
-                GAME_INACTIVE_AFTER_DAYS,
-                GAME_DELETION_GRACE_DAYS,
-            )
-            metrics.record_activity_report(status_report)
+            status_report = update_activity_metrics()
             if GAME_CLEANUP_ENABLED and not SESSIONS_API:
                 raise ValueError("SESSIONS_API is required when GAME_CLEANUP_ENABLED=true")
             open_session_games = fetch_open_session_games(SESSIONS_API) if SESSIONS_API else set()
@@ -133,5 +151,7 @@ def activity_job():
         print(f"[{datetime.now()}] - Activity report failed: {e}", file=sys.stderr)
 
 
-if ACTIVITY_API and ACTIVITY_REPORT_TIME:
-    every().day.at(ACTIVITY_REPORT_TIME).do(activity_job)
+if ACTIVITY_API:
+    every(ACTIVITY_REFRESH_INTERVAL_MIN).minutes.do(activity_refresh_job)
+    if ACTIVITY_REPORT_TIME:
+        every().day.at(ACTIVITY_REPORT_TIME).do(activity_job)

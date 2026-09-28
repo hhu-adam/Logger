@@ -98,10 +98,15 @@ It is separate from the local Flask API and binds to `127.0.0.1:8078` by default
 | --- | --- | --- |
 | `LOGGER_METRICS_HOST` | `127.0.0.1` | Interface for the Prometheus endpoint. |
 | `LOGGER_METRICS_PORT` | `8078` | Port for the Prometheus endpoint. |
+| `LOGGER_API_PORT` | `8077` | Port for Logger's local Flask API; use a different value for each Logger instance. |
 
 The endpoint exports aggregated data only: peak player/CPU/RAM measurements,
 job timing and failures, game lifecycle and cleanup outcomes, and country/game
 session observations. It never exports anonymized IP addresses.
+On startup, recent saved activity and cleanup reports and the previous day's
+country/game summary are loaded back into the exporter, so daily metrics remain
+available after a process restart. Activity metrics require `ACTIVITY_API` to
+be configured for that Logger instance.
 
 For the existing Docker-based Prometheus deployment, configure a controlled
 container-to-host route and add Logger as a scrape target. Do not expose the

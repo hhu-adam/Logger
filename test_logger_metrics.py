@@ -1,4 +1,8 @@
 import unittest
+import json
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
+from tempfile import TemporaryDirectory
 
 import pandas
 from prometheus_client import CollectorRegistry, generate_latest
@@ -32,6 +36,57 @@ class LoggerMetricsTest(unittest.TestCase):
         self.assertIn("logger_usage_peak_cpu_percent 45.5", rendered)
         self.assertIn("logger_usage_peak_memory_percent 67.25", rendered)
         self.assertIn('logger_job_last_success_timestamp_seconds{job="usage_measurement"}', rendered)
+
+    def test_accepts_usage_meter_two_digit_year_timestamp(self):
+        self.metrics.record_usage(
+            pandas.DataFrame(
+                {
+                    "Timestamp": ["26-09-28 18:07:05"],
+                    "Max_usr": [12],
+                    "Max_cpu": [45.5],
+                    "Max_mem": [67.25],
+                }
+            )
+        )
+        expected = datetime.strptime("26-09-28 18:07:05", "%y-%m-%d %H:%M:%S").astimezone().timestamp()
+        self.assertEqual(self.metrics.usage_measurement.collect()[0].samples[0].value, expected)
+
+    def test_restores_recent_daily_reports_after_restart(self):
+        with TemporaryDirectory() as directory:
+            activity = Path(directory) / "activity.json"
+            cleanup = Path(directory) / "cleanup.json"
+            location = Path(directory) / "locations.log"
+            generated_at = datetime.now(timezone.utc).isoformat()
+            activity.write_text(json.dumps({
+                "generatedAt": generated_at,
+                "games": {"owner/game": {"status": "active"}},
+            }), encoding="utf-8")
+            cleanup.write_text(json.dumps({
+                "generatedAt": generated_at,
+                "cleanupEnabled": False,
+                "candidates": [{"action": "eligible"}],
+                "expiredTrash": [],
+            }), encoding="utf-8")
+            location.write_text("country;game;n\nDE;owner/game;6\n", encoding="utf-8")
+
+            self.metrics.restore_saved_reports(activity, cleanup, location)
+
+        rendered = self.rendered_metrics()
+        self.assertIn('logger_game_lifecycle_games{status="active"} 1.0', rendered)
+        self.assertIn('logger_game_cleanup_candidates{action="eligible"} 1.0', rendered)
+        self.assertIn('logger_location_game_observations{country="DE",game="owner/game"} 6.0', rendered)
+
+    def test_does_not_restore_stale_activity_report(self):
+        with TemporaryDirectory() as directory:
+            activity = Path(directory) / "activity.json"
+            activity.write_text(json.dumps({
+                "generatedAt": (datetime.now(timezone.utc) - timedelta(days=3)).isoformat(),
+                "games": {"owner/game": {"status": "active"}},
+            }), encoding="utf-8")
+
+            self.metrics.restore_saved_reports(activity, None, Path(directory) / "missing.log")
+
+        self.assertNotIn('logger_game_lifecycle_games{status="active"}', self.rendered_metrics())
 
     def test_exports_lifecycle_and_cleanup_without_paths(self):
         self.metrics.record_activity_report(

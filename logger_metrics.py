@@ -8,6 +8,8 @@ from __future__ import annotations
 
 from contextlib import contextmanager
 from datetime import datetime, timezone
+import json
+from pathlib import Path
 from time import monotonic, time
 from typing import Any, Iterator
 
@@ -18,7 +20,11 @@ from prometheus_client import CollectorRegistry, Counter, Gauge, Histogram, REGI
 def _timestamp_seconds(value: str | None) -> float | None:
     if not value:
         return None
-    parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    try:
+        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError:
+        # UsageMeter writes local timestamps with a two-digit year.
+        parsed = datetime.strptime(value, "%y-%m-%d %H:%M:%S").astimezone()
     if parsed.tzinfo is None:
         parsed = parsed.replace(tzinfo=timezone.utc)
     return parsed.timestamp()
@@ -240,6 +246,42 @@ class LoggerMetrics:
         for country, game in self._location_labels - current_labels:
             self.location_usage.remove(country, game)
         self._location_labels = current_labels
+
+    def restore_saved_reports(
+        self,
+        activity_path: str | Path | None,
+        cleanup_path: str | Path | None,
+        location_path: str | Path,
+    ) -> None:
+        """Restore recent daily summaries after a process restart."""
+        for path, recorder in (
+            (activity_path, self.record_activity_report),
+            (cleanup_path, self.record_cleanup_report),
+        ):
+            if path is None:
+                continue
+            try:
+                report_path = Path(path)
+                if not report_path.is_file():
+                    continue
+                report = json.loads(report_path.read_text(encoding="utf-8"))
+                if not isinstance(report, dict):
+                    raise ValueError("report must be an object")
+                generated_at = _timestamp_seconds(report.get("generatedAt"))
+                if generated_at is not None and 0 <= time() - generated_at < 26 * 3600:
+                    recorder(report)
+            except (OSError, ValueError, TypeError, KeyError) as error:
+                print(f"Could not restore Logger metrics from {path}: {error}")
+
+        try:
+            location_file = Path(location_path)
+            if location_file.is_file():
+                locations = pandas.read_csv(location_file, sep=";")
+                if not {"country", "game", "n"}.issubset(locations.columns):
+                    raise ValueError("location report is missing required columns")
+                self.record_location_usage(locations)
+        except (OSError, ValueError, KeyError) as error:
+            print(f"Could not restore Logger metrics from {location_path}: {error}")
 
 
 metrics = LoggerMetrics()

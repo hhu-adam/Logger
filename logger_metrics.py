@@ -104,6 +104,12 @@ class LoggerMetrics:
             ["game"],
             registry=registry,
         )
+        self.lifecycle_last_played = Gauge(
+            "logger_game_lifecycle_last_played_timestamp_seconds",
+            "Last recorded play timestamp for an installed game, or 0 if no play has been recorded.",
+            ["game"],
+            registry=registry,
+        )
         self.lifecycle_inactive_at = Gauge(
             "logger_game_lifecycle_inactive_at_timestamp_seconds",
             "Timestamp at which an installed game becomes inactive.",
@@ -195,6 +201,9 @@ class LoggerMetrics:
             self.lifecycle_info.labels(game, status).set(1)
             if status in counts:
                 counts[status] += 1
+            self.lifecycle_last_played.labels(game).set(
+                _timestamp_seconds(activity.get("lastPlayedAt")) or 0
+            )
             for value, metric in (
                 (activity.get("lastActivityAt"), self.lifecycle_last_activity),
                 (activity.get("inactiveAt"), self.lifecycle_inactive_at),
@@ -207,6 +216,7 @@ class LoggerMetrics:
         for game, status in self._lifecycle_labels - current_labels:
             self.lifecycle_info.remove(game, status)
         for game in self._lifecycle_games - current_games:
+            self.lifecycle_last_played.remove(game)
             self.lifecycle_last_activity.remove(game)
             self.lifecycle_inactive_at.remove(game)
             self.lifecycle_deletion_due_at.remove(game)

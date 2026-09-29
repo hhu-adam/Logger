@@ -94,6 +94,7 @@ class LoggerMetricsTest(unittest.TestCase):
                 "games": {
                     "owner/active": {
                         "status": "active",
+                        "lastPlayedAt": "2026-09-01T12:00:00Z",
                         "lastActivityAt": "2026-09-02T00:00:00Z",
                         "inactiveAt": "2026-11-01T00:00:00Z",
                         "deletionDueAt": "2026-12-01T00:00:00Z",
@@ -122,9 +123,28 @@ class LoggerMetricsTest(unittest.TestCase):
         self.assertIn('logger_game_lifecycle_games{status="active"} 1.0', rendered)
         self.assertIn('logger_game_lifecycle_games{status="deletion_due"} 1.0', rendered)
         self.assertIn('logger_game_lifecycle_info{game="owner/due",status="deletion_due"} 1.0', rendered)
+        played_at = datetime(2026, 9, 1, 12, tzinfo=timezone.utc).timestamp()
+        played_samples = {
+            sample.labels["game"]: sample.value
+            for sample in self.metrics.lifecycle_last_played.collect()[0].samples
+        }
+        self.assertEqual(played_samples["owner/active"], played_at)
+        self.assertEqual(played_samples["owner/due"], 0)
+        self.assertIn(
+            'logger_game_lifecycle_last_played_timestamp_seconds{game="owner/due"} 0.0',
+            rendered,
+        )
         self.assertIn('logger_game_cleanup_candidates{action="moved_to_trash"} 1.0', rendered)
         self.assertIn('logger_game_cleanup_skipped_games{reason="protected"} 1.0', rendered)
         self.assertNotIn("/private", rendered)
+
+    def test_removes_last_played_metric_when_game_disappears(self):
+        self.metrics.record_activity_report({"games": {"owner/game": {"status": "active"}}})
+        self.metrics.record_activity_report({"games": {}})
+        self.assertNotIn(
+            'logger_game_lifecycle_last_played_timestamp_seconds{game="owner/game"}',
+            self.rendered_metrics(),
+        )
 
     def test_exports_aggregated_country_game_usage_only(self):
         self.metrics.record_location_usage(

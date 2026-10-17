@@ -3,7 +3,7 @@ import os
 import pandas
 import traceback
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from schedule import every, repeat, run_pending
 from Location.measurement.measurement import LocationMeter
 from Location.translation.translation import create_translation
@@ -53,24 +53,28 @@ def measuring_job_users():
     with metrics.observe_job("session_measurement"):
         use_meter.update_usr_measurement()
 
-@repeat(every(15).seconds)
-def measuring_job_cpu():
-    with metrics.observe_job("cpu_measurement"):
-        use_meter.update_cpu_measurement()
-
 @repeat(every(MEASURING_INTERVAL_MIN).minutes)
 def measuring_job_player_retention():
     with metrics.observe_job("game_usage_measurement"):
         with data_lock:
             state.daily_game_user_log = use_meter.update_loc_measurement(state.daily_game_user_log)
+            measured_at = datetime.now(timezone.utc)
+            if state.reporting_location_period_start is None:
+                state.reporting_location_period_start = measured_at.date().isoformat()
+            state.reporting_last_location_measurement = measured_at.isoformat()
 
 @repeat(every(MEASURING_INTERVAL_MIN).minutes)
 def measuring_job_maximum_usage():
-    with metrics.observe_job("usage_measurement"):
-        with data_lock:
-            state.daily_hardware_user_log = use_meter.update_hwr_measurements(state.daily_hardware_user_log)
-            metrics.record_usage(state.daily_hardware_user_log)
-            print(f"Hardware user logs: {state.daily_hardware_user_log}")
+    try:
+        with metrics.observe_job("usage_measurement"):
+            with data_lock:
+                state.daily_hardware_user_log = use_meter.update_hwr_measurements(state.daily_hardware_user_log)
+                metrics.record_usage(state.daily_hardware_user_log)
+                print(f"Hardware user logs: {state.daily_hardware_user_log}")
+    except Exception as error:
+        # A source outage must not stop the scheduler. The job's last-success
+        # timestamp stays unchanged, and dashboards expire old CPU values.
+        print(f"[{datetime.now()}] - Usage measurement failed: {error}", file=sys.stderr)
 
 @repeat(every().day.at(SAVING_TIME))
 def saving_job():
@@ -95,6 +99,8 @@ def translating_job():
                 translated = create_translation(state.daily_game_user_log, translation_path)
                 metrics.record_location_usage(translated)
                 clear_measurements(state.daily_game_user_log, "Daily measurements")
+                state.reporting_location_period_start = None
+                state.reporting_last_location_measurement = None
     except FileNotFoundError as e:
         print(f"[{datetime.now()}] - Exception during translation: {e}", file=sys.stderr)
     except Exception as e:

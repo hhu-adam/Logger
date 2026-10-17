@@ -51,6 +51,24 @@ class LoggerMetricsTest(unittest.TestCase):
         expected = datetime.strptime("26-09-28 18:07:05", "%y-%m-%d %H:%M:%S").astimezone().timestamp()
         self.assertEqual(self.metrics.usage_measurement.collect()[0].samples[0].value, expected)
 
+    def test_cpu_starts_unknown_and_invalid_values_do_not_refresh_success(self):
+        self.assertIn("logger_usage_peak_cpu_percent NaN", self.rendered_metrics())
+        self.metrics.record_usage(pandas.DataFrame({
+            "Timestamp": ["2026-10-17T12:00:00Z"],
+            "Max_usr": [12], "Max_cpu": [10], "Max_mem": [50],
+        }))
+        expected = datetime(2026, 10, 17, 12, tzinfo=timezone.utc).timestamp()
+        for invalid in (float("nan"), float("inf"), -1, 101):
+            with self.subTest(invalid=invalid):
+                self.metrics.record_usage(pandas.DataFrame({
+                    "Timestamp": ["2026-10-17T12:10:00Z"],
+                    "Max_usr": [15], "Max_cpu": [invalid], "Max_mem": [55],
+                }))
+                self.assertIn("logger_usage_peak_cpu_percent NaN", self.rendered_metrics())
+                self.assertIn("logger_usage_peak_players 15.0", self.rendered_metrics())
+                self.assertIn("logger_usage_peak_memory_percent 55.0", self.rendered_metrics())
+                self.assertEqual(self.metrics.usage_cpu_last_success.collect()[0].samples[0].value, expected)
+
     def test_restores_recent_daily_reports_after_restart(self):
         with TemporaryDirectory() as directory:
             activity = Path(directory) / "activity.json"

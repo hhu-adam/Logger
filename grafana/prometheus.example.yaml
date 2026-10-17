@@ -1,0 +1,22 @@
+# Merge these jobs into the deployed Prometheus configuration. Replace targets
+# with addresses reachable from the Prometheus container; do not add duplicate
+# scrape jobs for targets that are already configured.
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: node-exporter
+    scrape_interval: 15s
+    scrape_timeout: 10s
+    static_configs:
+      - targets: ['NODE_EXPORTER_HOST:9100']
+        labels:
+          environment: production
+  - job_name: logger
+    scrape_interval: 15s
+    scrape_timeout: 10s
+    static_configs:
+      - targets: ['LOGGER_HOST:8078']
+        labels:
+          environment: production

@@ -10,8 +10,11 @@ module.exports = {
         HARDWARE_INFO_FILE: "",
         CPU_SCRIPT: "",
         IPINFO_TOKEN: "",
-        MEASUREMENT_INTERVAL_MIN: 0,
-        MEASUREMENT_HW_INTERVAL_SEC: 0,
+        MEASUREMENT_INTERVAL_MIN: 10,
+        MEASUREMENT_HW_INTERVAL_SEC: 1,
+        PROMETHEUS_URL: "http://localhost:9090",
+        PROMETHEUS_NODE_JOB: "",
+        PROMETHEUS_NODE_INSTANCE: "",
         TRANSLATION_TIME: "00:00",
         SAVING_TIME: "00:00",
         ACTIVITY_API: "",
@@ -28,7 +31,10 @@ module.exports = {
         CLEANUP_REPORT: "Activity/logs/cleanup-status.json",
         LOGGER_METRICS_HOST: "127.0.0.1",
         LOGGER_METRICS_PORT: 8078,
-        LOGGER_API_PORT: 8077
+        LOGGER_API_PORT: 8077,
+        LOGGER_API_HOST: "127.0.0.1",
+        LOGGER_ENVIRONMENT: "production",
+        TZ: "UTC"
     }
   }]
 }

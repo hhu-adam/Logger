@@ -1,0 +1,27 @@
+# Copy to Grafana provisioning only during a later deployment.
+# Infinity 3.6.0 is used for the Grafana 12.1.1 local preview.
+apiVersion: 1
+datasources:
+  - name: Logger Prometheus
+    uid: logger-prometheus
+    type: prometheus
+    access: proxy
+    url: http://prometheus:9090
+    jsonData:
+      timeInterval: 15s
+  - name: logger-reports-production
+    uid: logger-reports-production
+    type: yesoreyeram-infinity-datasource
+    access: proxy
+    url: http://LOGGER_HOST:8077
+    jsonData:
+      allowedHosts:
+        - http://LOGGER_HOST:8077
+  - name: logger-reports-development
+    uid: logger-reports-development
+    type: yesoreyeram-infinity-datasource
+    access: proxy
+    url: http://LOGGER_HOST:8087
+    jsonData:
+      allowedHosts:
+        - http://LOGGER_HOST:8087

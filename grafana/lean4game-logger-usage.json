@@ -1,0 +1,2285 @@
+{
+  "id": null,
+  "uid": "logger-usage",
+  "title": "Lean4Game · Nutzung & Berichte",
+  "schemaVersion": 41,
+  "version": 1,
+  "editable": true,
+  "timezone": "utc",
+  "weekStart": "monday",
+  "refresh": "1m",
+  "graphTooltip": 1,
+  "time": {
+    "from": "now/M",
+    "to": "now"
+  },
+  "timepicker": {
+    "refresh_intervals": [
+      "30s",
+      "1m",
+      "5m",
+      "15m"
+    ],
+    "hidden": false
+  },
+  "templating": {
+    "list": [
+      {
+        "name": "environment",
+        "label": "Umgebung",
+        "type": "custom",
+        "query": "production,development",
+        "current": {
+          "text": "production",
+          "value": "production"
+        },
+        "options": [
+          {
+            "text": "production",
+            "value": "production",
+            "selected": true
+          },
+          {
+            "text": "development",
+            "value": "development",
+            "selected": false
+          }
+        ]
+      },
+      {
+        "name": "prometheus",
+        "label": "Prometheus",
+        "type": "datasource",
+        "query": "prometheus",
+        "refresh": 1
+      },
+      {
+        "name": "node_instance",
+        "label": "CPU-Quelle (VM)",
+        "type": "query",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${prometheus}"
+        },
+        "refresh": 1,
+        "multi": false,
+        "includeAll": false,
+        "sort": 1,
+        "definition": "label_values(node_cpu_seconds_total{mode=\"idle\"}, instance)",
+        "query": {
+          "query": "label_values(node_cpu_seconds_total{mode=\"idle\"}, instance)",
+          "refId": "PrometheusVariableQueryEditor-VariableQuery"
+        },
+        "options": [],
+        "current": {}
+      },
+      {
+        "name": "logger_reports",
+        "label": "Logger Reports",
+        "type": "datasource",
+        "query": "yesoreyeram-infinity-datasource",
+        "regex": "/^logger-reports-${environment}$/",
+        "refresh": 1
+      },
+      {
+        "name": "bucket",
+        "label": "Gruppierung",
+        "type": "custom",
+        "query": "day,week,month",
+        "current": {
+          "text": "day",
+          "value": "day"
+        },
+        "options": [
+          {
+            "text": "day",
+            "value": "day",
+            "selected": true
+          },
+          {
+            "text": "week",
+            "value": "week",
+            "selected": false
+          },
+          {
+            "text": "month",
+            "value": "month",
+            "selected": false
+          }
+        ]
+      }
+    ]
+  },
+  "links": [
+    {
+      "title": "Nutzung & Berichte",
+      "url": "/d/logger-usage",
+      "type": "link",
+      "keepTime": true,
+      "includeVars": true
+    },
+    {
+      "title": "Spielestatus",
+      "url": "/d/logger-games",
+      "type": "link",
+      "keepTime": true,
+      "includeVars": true
+    },
+    {
+      "title": "Betrieb",
+      "url": "/d/logger-operations",
+      "type": "link",
+      "keepTime": true,
+      "includeVars": true
+    },
+    {
+      "title": "Gestern",
+      "type": "link",
+      "url": "/d/logger-usage?from=now-1d/d&to=now/d",
+      "includeVars": true,
+      "keepTime": false
+    },
+    {
+      "title": "Letzte Woche",
+      "type": "link",
+      "url": "/d/logger-usage?from=now-1w/w&to=now/w",
+      "includeVars": true,
+      "keepTime": false
+    },
+    {
+      "title": "Letzter Monat",
+      "type": "link",
+      "url": "/d/logger-usage?from=now-1M/M&to=now/M",
+      "includeVars": true,
+      "keepTime": false
+    }
+  ],
+  "panels": [
+    {
+      "id": 100,
+      "type": "text",
+      "title": "Einordnung · UTC",
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 3
+      },
+      "options": {
+        "mode": "markdown",
+        "content": "**Geschätzte Sitzungsstunden** = Beobachtungen / 6. Heute ist vorläufig; Länder und Kreuztabelle enden am letzten abgeschlossenen UTC-Tag. **Vorperiodenvergleich**: gleich viele abgeschlossene Tage; bei Datenlücken keine Prozentangabe. **CPU/RAM** sind Hostwerte. Spitzen je Kennzahl können zu unterschiedlichen Zeitpunkten auftreten. Fehlende Werte sind keine Nullnutzung."
+      }
+    },
+    {
+      "id": 110,
+      "title": "Abgeschlossene Stunden",
+      "type": "stat",
+      "datasource": {
+        "type": "yesoreyeram-infinity-datasource",
+        "uid": "${logger_reports}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "${logger_reports}"
+          },
+          "type": "json",
+          "source": "url",
+          "url": "/reporting/report?from=${__timeFrom}&to=${__timeTo}&bucket=${bucket}",
+          "url_options": {
+            "method": "GET"
+          },
+          "parser": "backend",
+          "root_selector": "summary",
+          "format": "table",
+          "columns": [
+            {
+              "selector": "closed_hours",
+              "text": "Abgeschlossene Stunden",
+              "type": "number"
+            }
+          ]
+        }
+      ],
+      "gridPos": {
+        "x": 0,
+        "y": 3,
+        "w": 4,
+        "h": 4
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "suffix: h",
+          "decimals": 2,
+          "noValue": "—",
+          "custom": {}
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "colorMode": "value",
+        "graphMode": "none"
+      },
+      "description": ""
+    },
+    {
+      "id": 111,
+      "title": "Heute · vorläufig",
+      "type": "stat",
+      "datasource": {
+        "type": "yesoreyeram-infinity-datasource",
+        "uid": "${logger_reports}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "${logger_reports}"
+          },
+          "type": "json",
+          "source": "url",
+          "url": "/reporting/report?from=${__timeFrom}&to=${__timeTo}&bucket=${bucket}",
+          "url_options": {
+            "method": "GET"
+          },
+          "parser": "backend",
+          "root_selector": "summary",
+          "format": "table",
+          "columns": [
+            {
+              "selector": "provisional_hours",
+              "text": "Heute · vorläufig",
+              "type": "number"
+            }
+          ]
+        }
+      ],
+      "gridPos": {
+        "x": 4,
+        "y": 3,
+        "w": 4,
+        "h": 4
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "suffix: h",
+          "decimals": 2,
+          "noValue": "—",
+          "custom": {}
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "colorMode": "value",
+        "graphMode": "none"
+      },
+      "description": ""
+    },
+    {
+      "id": 112,
+      "title": "Summe inkl. heute",
+      "type": "stat",
+      "datasource": {
+        "type": "yesoreyeram-infinity-datasource",
+        "uid": "${logger_reports}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "${logger_reports}"
+          },
+          "type": "json",
+          "source": "url",
+          "url": "/reporting/report?from=${__timeFrom}&to=${__timeTo}&bucket=${bucket}",
+          "url_options": {
+            "method": "GET"
+          },
+          "parser": "backend",
+          "root_selector": "summary",
+          "format": "table",
+          "columns": [
+            {
+              "selector": "total_hours",
+              "text": "Summe inkl. heute",
+              "type": "number"
+            }
+          ]
+        }
+      ],
+      "gridPos": {
+        "x": 8,
+        "y": 3,
+        "w": 4,
+        "h": 4
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "suffix: h",
+          "decimals": 2,
+          "noValue": "—",
+          "custom": {}
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "colorMode": "value",
+        "graphMode": "none"
+      },
+      "description": ""
+    },
+    {
+      "id": 113,
+      "title": "Veränderung · abgeschlossene Tage",
+      "type": "stat",
+      "datasource": {
+        "type": "yesoreyeram-infinity-datasource",
+        "uid": "${logger_reports}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "${logger_reports}"
+          },
+          "type": "json",
+          "source": "url",
+          "url": "/reporting/report?from=${__timeFrom}&to=${__timeTo}&bucket=${bucket}",
+          "url_options": {
+            "method": "GET"
+          },
+          "parser": "backend",
+          "root_selector": "summary",
+          "format": "table",
+          "columns": [
+            {
+              "selector": "change_percent",
+              "text": "Veränderung · abgeschlossene Tage",
+              "type": "number"
+            }
+          ]
+        }
+      ],
+      "gridPos": {
+        "x": 12,
+        "y": 3,
+        "w": 4,
+        "h": 4
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "decimals": 2,
+          "noValue": "—",
+          "custom": {}
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "colorMode": "value",
+        "graphMode": "none"
+      },
+      "description": ""
+    },
+    {
+      "id": 114,
+      "title": "UNKNOWN · abgeschlossene Tage",
+      "type": "stat",
+      "datasource": {
+        "type": "yesoreyeram-infinity-datasource",
+        "uid": "${logger_reports}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "${logger_reports}"
+          },
+          "type": "json",
+          "source": "url",
+          "url": "/reporting/report?from=${__timeFrom}&to=${__timeTo}&bucket=${bucket}",
+          "url_options": {
+            "method": "GET"
+          },
+          "parser": "backend",
+          "root_selector": "summary",
+          "format": "table",
+          "columns": [
+            {
+              "selector": "unknown_percent",
+              "text": "UNKNOWN · abgeschlossene Tage",
+              "type": "number"
+            }
+          ]
+        }
+      ],
+      "gridPos": {
+        "x": 16,
+        "y": 3,
+        "w": 4,
+        "h": 4
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "decimals": 2,
+          "noValue": "—",
+          "custom": {}
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "colorMode": "value",
+        "graphMode": "none"
+      },
+      "description": ""
+    },
+    {
+      "id": 115,
+      "title": "Tage mit Länderdatei",
+      "type": "stat",
+      "datasource": {
+        "type": "yesoreyeram-infinity-datasource",
+        "uid": "${logger_reports}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "${logger_reports}"
+          },
+          "type": "json",
+          "source": "url",
+          "url": "/reporting/report?from=${__timeFrom}&to=${__timeTo}&bucket=${bucket}",
+          "url_options": {
+            "method": "GET"
+          },
+          "parser": "backend",
+          "root_selector": "summary",
+          "format": "table",
+          "columns": [
+            {
+              "selector": "location_days",
+              "text": "Tage mit Länderdatei",
+              "type": "number"
+            }
+          ]
+        }
+      ],
+      "gridPos": {
+        "x": 20,
+        "y": 3,
+        "w": 4,
+        "h": 4
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 2,
+          "noValue": "—",
+          "custom": {}
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "colorMode": "value",
+        "graphMode": "none"
+      },
+      "description": ""
+    },
+    {
+      "id": 120,
+      "title": "Geschätzte Stunden · Tag / Woche / Monat",
+      "type": "timeseries",
+      "datasource": {
+        "type": "yesoreyeram-infinity-datasource",
+        "uid": "${logger_reports}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "${logger_reports}"
+          },
+          "type": "json",
+          "source": "url",
+          "url": "/reporting/report?from=${__timeFrom}&to=${__timeTo}&bucket=${bucket}",
+          "url_options": {
+            "method": "GET"
+          },
+          "parser": "backend",
+          "root_selector": "series",
+          "format": "timeseries",
+          "columns": [
+            {
+              "selector": "time",
+              "text": "Time",
+              "type": "timestamp"
+            },
+            {
+              "selector": "hours",
+              "text": "Stunden",
+              "type": "number"
+            }
+          ]
+        }
+      ],
+      "gridPos": {
+        "x": 0,
+        "y": 7,
+        "w": 16,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "suffix: h",
+          "decimals": 2,
+          "noValue": "—",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "stepAfter",
+            "showPoints": "auto",
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      },
+      "options": {},
+      "description": ""
+    },
+    {
+      "id": 121,
+      "title": "Vorperiodenvergleich · abgeschlossene Tage",
+      "type": "table",
+      "datasource": {
+        "type": "yesoreyeram-infinity-datasource",
+        "uid": "${logger_reports}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "${logger_reports}"
+          },
+          "type": "json",
+          "source": "url",
+          "url": "/reporting/report?from=${__timeFrom}&to=${__timeTo}&bucket=${bucket}",
+          "url_options": {
+            "method": "GET"
+          },
+          "parser": "backend",
+          "root_selector": "comparison",
+          "format": "table",
+          "columns": []
+        }
+      ],
+      "gridPos": {
+        "x": 16,
+        "y": 7,
+        "w": 8,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 2,
+          "noValue": "—",
+          "custom": {}
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Veränderung · %"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percent"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Host-CPU-Spitze · %"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percent"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Host-RAM-Spitze · %"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percent"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Geschätzte Stunden"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "suffix: h"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Aktueller Zeitraum · h"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "suffix: h"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Vorperiode · h"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "suffix: h"
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true
+      },
+      "description": "",
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "renameByName": {
+              "country": "Land",
+              "total_hours": "Summe · h",
+              "start": "Beginn Vorperiode",
+              "end": "Ende Vorperiode",
+              "current_hours": "Aktueller Zeitraum · h",
+              "previous_hours": "Vorperiode · h",
+              "change_percent": "Veränderung · %",
+              "comparable": "Vergleichbare Daten",
+              "date": "UTC-Tag",
+              "hours": "Geschätzte Stunden",
+              "location_available": "Spielbeobachtungen verfügbar",
+              "country_report_available": "Länderbericht verfügbar",
+              "usage_available": "Usage verfügbar",
+              "peak_connections": "Verbindungsspitze",
+              "peak_host_cpu_percent": "Host-CPU-Spitze · %",
+              "peak_host_ram_percent": "Host-RAM-Spitze · %",
+              "provisional": "Vorläufig",
+              "game_observations": "Spielbeobachtungen",
+              "country_report": "Länderbericht",
+              "usage": "Usage-Messungen",
+              "file": "Quelle",
+              "line": "Zeile",
+              "reason": "Hinweis",
+              "last_location_measurement": "Letzte Spielbeobachtung · UTC",
+              "observations": "Beobachtungen"
+            },
+            "excludeByName": {
+              "time": true
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": 122,
+      "title": "Länder · abgeschlossene Tage",
+      "type": "barchart",
+      "datasource": {
+        "type": "yesoreyeram-infinity-datasource",
+        "uid": "${logger_reports}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "${logger_reports}"
+          },
+          "type": "json",
+          "source": "url",
+          "url": "/reporting/report?from=${__timeFrom}&to=${__timeTo}&bucket=${bucket}",
+          "url_options": {
+            "method": "GET"
+          },
+          "parser": "backend",
+          "root_selector": "countries",
+          "format": "table",
+          "columns": [
+            {
+              "selector": "country",
+              "text": "Land",
+              "type": "string"
+            },
+            {
+              "selector": "hours",
+              "text": "Stunden",
+              "type": "number"
+            }
+          ]
+        }
+      ],
+      "gridPos": {
+        "x": 0,
+        "y": 15,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "suffix: h",
+          "decimals": 2,
+          "noValue": "—",
+          "custom": {}
+        },
+        "overrides": []
+      },
+      "options": {
+        "orientation": "horizontal",
+        "showValue": "auto",
+        "legend": {
+          "displayMode": "hidden"
+        }
+      },
+      "description": "",
+      "transformations": [
+        {
+          "id": "limit",
+          "options": {
+            "limitField": 10
+          }
+        }
+      ]
+    },
+    {
+      "id": 123,
+      "title": "Spiele · inklusive heute vorläufig",
+      "type": "barchart",
+      "datasource": {
+        "type": "yesoreyeram-infinity-datasource",
+        "uid": "${logger_reports}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "${logger_reports}"
+          },
+          "type": "json",
+          "source": "url",
+          "url": "/reporting/report?from=${__timeFrom}&to=${__timeTo}&bucket=${bucket}",
+          "url_options": {
+            "method": "GET"
+          },
+          "parser": "backend",
+          "root_selector": "games",
+          "format": "table",
+          "columns": [
+            {
+              "selector": "game",
+              "text": "Spiel",
+              "type": "string"
+            },
+            {
+              "selector": "hours",
+              "text": "Stunden",
+              "type": "number"
+            }
+          ]
+        }
+      ],
+      "gridPos": {
+        "x": 12,
+        "y": 15,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "suffix: h",
+          "decimals": 2,
+          "noValue": "—",
+          "custom": {}
+        },
+        "overrides": []
+      },
+      "options": {
+        "orientation": "horizontal",
+        "showValue": "auto",
+        "legend": {
+          "displayMode": "hidden"
+        }
+      },
+      "description": "",
+      "transformations": [
+        {
+          "id": "limit",
+          "options": {
+            "limitField": 10
+          }
+        }
+      ]
+    },
+    {
+      "id": 124,
+      "title": "Land × Spiel · abgeschlossene Tage · Stunden",
+      "type": "table",
+      "datasource": {
+        "type": "yesoreyeram-infinity-datasource",
+        "uid": "${logger_reports}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "${logger_reports}"
+          },
+          "type": "json",
+          "source": "url",
+          "url": "/reporting/report?from=${__timeFrom}&to=${__timeTo}&bucket=${bucket}",
+          "url_options": {
+            "method": "GET"
+          },
+          "parser": "backend",
+          "root_selector": "matrix",
+          "format": "table",
+          "columns": []
+        }
+      ],
+      "gridPos": {
+        "x": 0,
+        "y": 23,
+        "w": 24,
+        "h": 10
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "suffix: h",
+          "decimals": 2,
+          "noValue": "—",
+          "custom": {}
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Veränderung · %"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percent"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Host-CPU-Spitze · %"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percent"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Host-RAM-Spitze · %"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percent"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Geschätzte Stunden"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "suffix: h"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Aktueller Zeitraum · h"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "suffix: h"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Vorperiode · h"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "suffix: h"
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true
+      },
+      "description": "",
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "renameByName": {
+              "country": "Land",
+              "total_hours": "Summe · h",
+              "start": "Beginn Vorperiode",
+              "end": "Ende Vorperiode",
+              "current_hours": "Aktueller Zeitraum · h",
+              "previous_hours": "Vorperiode · h",
+              "change_percent": "Veränderung · %",
+              "comparable": "Vergleichbare Daten",
+              "date": "UTC-Tag",
+              "hours": "Geschätzte Stunden",
+              "location_available": "Spielbeobachtungen verfügbar",
+              "country_report_available": "Länderbericht verfügbar",
+              "usage_available": "Usage verfügbar",
+              "peak_connections": "Verbindungsspitze",
+              "peak_host_cpu_percent": "Host-CPU-Spitze · %",
+              "peak_host_ram_percent": "Host-RAM-Spitze · %",
+              "provisional": "Vorläufig",
+              "game_observations": "Spielbeobachtungen",
+              "country_report": "Länderbericht",
+              "usage": "Usage-Messungen",
+              "file": "Quelle",
+              "line": "Zeile",
+              "reason": "Hinweis",
+              "last_location_measurement": "Letzte Spielbeobachtung · UTC",
+              "observations": "Beobachtungen"
+            },
+            "excludeByName": {
+              "time": true
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": 125,
+      "title": "Tagesabschluss · verfügbare Werte und Spitzen",
+      "type": "table",
+      "datasource": {
+        "type": "yesoreyeram-infinity-datasource",
+        "uid": "${logger_reports}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "${logger_reports}"
+          },
+          "type": "json",
+          "source": "url",
+          "url": "/reporting/report?from=${__timeFrom}&to=${__timeTo}&bucket=${bucket}",
+          "url_options": {
+            "method": "GET"
+          },
+          "parser": "backend",
+          "root_selector": "daily",
+          "format": "table",
+          "columns": []
+        }
+      ],
+      "gridPos": {
+        "x": 0,
+        "y": 33,
+        "w": 24,
+        "h": 9
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 2,
+          "noValue": "—",
+          "custom": {}
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Veränderung · %"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percent"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Host-CPU-Spitze · %"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percent"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Host-RAM-Spitze · %"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percent"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Geschätzte Stunden"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "suffix: h"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Aktueller Zeitraum · h"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "suffix: h"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Vorperiode · h"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "suffix: h"
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true
+      },
+      "description": "",
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "renameByName": {
+              "country": "Land",
+              "total_hours": "Summe · h",
+              "start": "Beginn Vorperiode",
+              "end": "Ende Vorperiode",
+              "current_hours": "Aktueller Zeitraum · h",
+              "previous_hours": "Vorperiode · h",
+              "change_percent": "Veränderung · %",
+              "comparable": "Vergleichbare Daten",
+              "date": "UTC-Tag",
+              "hours": "Geschätzte Stunden",
+              "location_available": "Spielbeobachtungen verfügbar",
+              "country_report_available": "Länderbericht verfügbar",
+              "usage_available": "Usage verfügbar",
+              "peak_connections": "Verbindungsspitze",
+              "peak_host_cpu_percent": "Host-CPU-Spitze · %",
+              "peak_host_ram_percent": "Host-RAM-Spitze · %",
+              "provisional": "Vorläufig",
+              "game_observations": "Spielbeobachtungen",
+              "country_report": "Länderbericht",
+              "usage": "Usage-Messungen",
+              "file": "Quelle",
+              "line": "Zeile",
+              "reason": "Hinweis",
+              "last_location_measurement": "Letzte Spielbeobachtung · UTC",
+              "observations": "Beobachtungen"
+            },
+            "excludeByName": {
+              "time": true
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": 126,
+      "title": "Gespeicherte 10-Minuten-Spitzen · Verbindungen",
+      "type": "timeseries",
+      "datasource": {
+        "type": "yesoreyeram-infinity-datasource",
+        "uid": "${logger_reports}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "${logger_reports}"
+          },
+          "type": "json",
+          "source": "url",
+          "url": "/reporting/report?from=${__timeFrom}&to=${__timeTo}&bucket=${bucket}",
+          "url_options": {
+            "method": "GET"
+          },
+          "parser": "backend",
+          "root_selector": "usage",
+          "format": "timeseries",
+          "columns": [
+            {
+              "selector": "time",
+              "text": "Time",
+              "type": "timestamp"
+            },
+            {
+              "selector": "connections",
+              "text": "Verbindungen · Peak",
+              "type": "number"
+            }
+          ]
+        }
+      ],
+      "gridPos": {
+        "x": 0,
+        "y": 42,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 2,
+          "noValue": "—",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "stepAfter",
+            "showPoints": "auto",
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      },
+      "options": {},
+      "description": ""
+    },
+    {
+      "id": 127,
+      "title": "Gespeicherte 10-Minuten-Spitzen · Hostlast",
+      "type": "timeseries",
+      "datasource": {
+        "type": "yesoreyeram-infinity-datasource",
+        "uid": "${logger_reports}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "${logger_reports}"
+          },
+          "type": "json",
+          "source": "url",
+          "url": "/reporting/report?from=${__timeFrom}&to=${__timeTo}&bucket=${bucket}",
+          "url_options": {
+            "method": "GET"
+          },
+          "parser": "backend",
+          "root_selector": "usage",
+          "format": "timeseries",
+          "columns": [
+            {
+              "selector": "time",
+              "text": "Time",
+              "type": "timestamp"
+            },
+            {
+              "selector": "host_cpu_percent",
+              "text": "Host-CPU · Peak",
+              "type": "number"
+            },
+            {
+              "selector": "host_ram_percent",
+              "text": "Host-RAM · Peak",
+              "type": "number"
+            }
+          ]
+        }
+      ],
+      "gridPos": {
+        "x": 12,
+        "y": 42,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "decimals": 2,
+          "noValue": "—",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "stepAfter",
+            "showPoints": "auto",
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      },
+      "options": {},
+      "description": ""
+    },
+    {
+      "id": 128,
+      "title": "Datenabdeckung · keine Vollständigkeitsgarantie",
+      "type": "table",
+      "datasource": {
+        "type": "yesoreyeram-infinity-datasource",
+        "uid": "${logger_reports}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "${logger_reports}"
+          },
+          "type": "json",
+          "source": "url",
+          "url": "/reporting/report?from=${__timeFrom}&to=${__timeTo}&bucket=${bucket}",
+          "url_options": {
+            "method": "GET"
+          },
+          "parser": "backend",
+          "root_selector": "coverage",
+          "format": "table",
+          "columns": []
+        }
+      ],
+      "gridPos": {
+        "x": 0,
+        "y": 50,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 2,
+          "noValue": "—",
+          "custom": {}
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Veränderung · %"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percent"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Host-CPU-Spitze · %"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percent"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Host-RAM-Spitze · %"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percent"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Geschätzte Stunden"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "suffix: h"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Aktueller Zeitraum · h"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "suffix: h"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Vorperiode · h"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "suffix: h"
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true
+      },
+      "description": "",
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "renameByName": {
+              "country": "Land",
+              "total_hours": "Summe · h",
+              "start": "Beginn Vorperiode",
+              "end": "Ende Vorperiode",
+              "current_hours": "Aktueller Zeitraum · h",
+              "previous_hours": "Vorperiode · h",
+              "change_percent": "Veränderung · %",
+              "comparable": "Vergleichbare Daten",
+              "date": "UTC-Tag",
+              "hours": "Geschätzte Stunden",
+              "location_available": "Spielbeobachtungen verfügbar",
+              "country_report_available": "Länderbericht verfügbar",
+              "usage_available": "Usage verfügbar",
+              "peak_connections": "Verbindungsspitze",
+              "peak_host_cpu_percent": "Host-CPU-Spitze · %",
+              "peak_host_ram_percent": "Host-RAM-Spitze · %",
+              "provisional": "Vorläufig",
+              "game_observations": "Spielbeobachtungen",
+              "country_report": "Länderbericht",
+              "usage": "Usage-Messungen",
+              "file": "Quelle",
+              "line": "Zeile",
+              "reason": "Hinweis",
+              "last_location_measurement": "Letzte Spielbeobachtung · UTC",
+              "observations": "Beobachtungen"
+            },
+            "excludeByName": {
+              "time": true
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": 129,
+      "title": "Hinweise zu Quelldaten",
+      "type": "table",
+      "datasource": {
+        "type": "yesoreyeram-infinity-datasource",
+        "uid": "${logger_reports}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "${logger_reports}"
+          },
+          "type": "json",
+          "source": "url",
+          "url": "/reporting/report?from=${__timeFrom}&to=${__timeTo}&bucket=${bucket}",
+          "url_options": {
+            "method": "GET"
+          },
+          "parser": "backend",
+          "root_selector": "issues",
+          "format": "table",
+          "columns": []
+        }
+      ],
+      "gridPos": {
+        "x": 12,
+        "y": 50,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 2,
+          "noValue": "—",
+          "custom": {}
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Veränderung · %"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percent"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Host-CPU-Spitze · %"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percent"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Host-RAM-Spitze · %"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percent"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Geschätzte Stunden"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "suffix: h"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Aktueller Zeitraum · h"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "suffix: h"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Vorperiode · h"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "suffix: h"
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true
+      },
+      "description": "",
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "renameByName": {
+              "country": "Land",
+              "total_hours": "Summe · h",
+              "start": "Beginn Vorperiode",
+              "end": "Ende Vorperiode",
+              "current_hours": "Aktueller Zeitraum · h",
+              "previous_hours": "Vorperiode · h",
+              "change_percent": "Veränderung · %",
+              "comparable": "Vergleichbare Daten",
+              "date": "UTC-Tag",
+              "hours": "Geschätzte Stunden",
+              "location_available": "Spielbeobachtungen verfügbar",
+              "country_report_available": "Länderbericht verfügbar",
+              "usage_available": "Usage verfügbar",
+              "peak_connections": "Verbindungsspitze",
+              "peak_host_cpu_percent": "Host-CPU-Spitze · %",
+              "peak_host_ram_percent": "Host-RAM-Spitze · %",
+              "provisional": "Vorläufig",
+              "game_observations": "Spielbeobachtungen",
+              "country_report": "Länderbericht",
+              "usage": "Usage-Messungen",
+              "file": "Quelle",
+              "line": "Zeile",
+              "reason": "Hinweis",
+              "last_location_measurement": "Letzte Spielbeobachtung · UTC",
+              "observations": "Beobachtungen"
+            },
+            "excludeByName": {
+              "time": true
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": 130,
+      "title": "Heute · Herkunft und Verfügbarkeit",
+      "type": "table",
+      "datasource": {
+        "type": "yesoreyeram-infinity-datasource",
+        "uid": "${logger_reports}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "${logger_reports}"
+          },
+          "type": "json",
+          "source": "url",
+          "url": "/reporting/report?from=${__timeFrom}&to=${__timeTo}&bucket=${bucket}",
+          "url_options": {
+            "method": "GET"
+          },
+          "parser": "backend",
+          "root_selector": "provisional",
+          "format": "table",
+          "columns": []
+        }
+      ],
+      "gridPos": {
+        "x": 0,
+        "y": 58,
+        "w": 24,
+        "h": 6
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 2,
+          "noValue": "—",
+          "custom": {}
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Veränderung · %"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percent"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Host-CPU-Spitze · %"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percent"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Host-RAM-Spitze · %"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percent"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Geschätzte Stunden"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "suffix: h"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Aktueller Zeitraum · h"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "suffix: h"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Vorperiode · h"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "suffix: h"
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true
+      },
+      "description": "",
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "renameByName": {
+              "country": "Land",
+              "total_hours": "Summe · h",
+              "start": "Beginn Vorperiode",
+              "end": "Ende Vorperiode",
+              "current_hours": "Aktueller Zeitraum · h",
+              "previous_hours": "Vorperiode · h",
+              "change_percent": "Veränderung · %",
+              "comparable": "Vergleichbare Daten",
+              "date": "UTC-Tag",
+              "hours": "Geschätzte Stunden",
+              "location_available": "Spielbeobachtungen verfügbar",
+              "country_report_available": "Länderbericht verfügbar",
+              "usage_available": "Usage verfügbar",
+              "peak_connections": "Verbindungsspitze",
+              "peak_host_cpu_percent": "Host-CPU-Spitze · %",
+              "peak_host_ram_percent": "Host-RAM-Spitze · %",
+              "provisional": "Vorläufig",
+              "game_observations": "Spielbeobachtungen",
+              "country_report": "Länderbericht",
+              "usage": "Usage-Messungen",
+              "file": "Quelle",
+              "line": "Zeile",
+              "reason": "Hinweis",
+              "last_location_measurement": "Letzte Spielbeobachtung · UTC",
+              "observations": "Beobachtungen"
+            },
+            "excludeByName": {
+              "time": true
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": 140,
+      "title": "Verbindungsspitze im Zeitraum",
+      "type": "stat",
+      "datasource": {
+        "type": "yesoreyeram-infinity-datasource",
+        "uid": "${logger_reports}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "${logger_reports}"
+          },
+          "type": "json",
+          "source": "url",
+          "url": "/reporting/report?from=${__timeFrom}&to=${__timeTo}&bucket=${bucket}",
+          "url_options": {
+            "method": "GET"
+          },
+          "parser": "backend",
+          "root_selector": "summary",
+          "format": "table",
+          "columns": [
+            {
+              "selector": "peak_connections",
+              "text": "Verbindungsspitze im Zeitraum",
+              "type": "number"
+            }
+          ]
+        }
+      ],
+      "gridPos": {
+        "x": 0,
+        "y": 64,
+        "w": 8,
+        "h": 4
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 2,
+          "noValue": "—",
+          "custom": {}
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "graphMode": "none"
+      },
+      "description": ""
+    },
+    {
+      "id": 141,
+      "title": "Host-CPU-Spitze im Zeitraum",
+      "type": "stat",
+      "datasource": {
+        "type": "yesoreyeram-infinity-datasource",
+        "uid": "${logger_reports}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "${logger_reports}"
+          },
+          "type": "json",
+          "source": "url",
+          "url": "/reporting/report?from=${__timeFrom}&to=${__timeTo}&bucket=${bucket}",
+          "url_options": {
+            "method": "GET"
+          },
+          "parser": "backend",
+          "root_selector": "summary",
+          "format": "table",
+          "columns": [
+            {
+              "selector": "peak_host_cpu_percent",
+              "text": "Host-CPU-Spitze im Zeitraum",
+              "type": "number"
+            }
+          ]
+        }
+      ],
+      "gridPos": {
+        "x": 8,
+        "y": 64,
+        "w": 8,
+        "h": 4
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "decimals": 2,
+          "noValue": "—",
+          "custom": {}
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "graphMode": "none"
+      },
+      "description": "Maximum der gespeicherten CPU-Spitzen. Neue Messungen sind einminütige Mittelwerte im Zehn-Minuten-Fenster; historische Werte behalten die frühere Berechnung."
+    },
+    {
+      "id": 142,
+      "title": "Host-RAM-Spitze im Zeitraum",
+      "type": "stat",
+      "datasource": {
+        "type": "yesoreyeram-infinity-datasource",
+        "uid": "${logger_reports}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "${logger_reports}"
+          },
+          "type": "json",
+          "source": "url",
+          "url": "/reporting/report?from=${__timeFrom}&to=${__timeTo}&bucket=${bucket}",
+          "url_options": {
+            "method": "GET"
+          },
+          "parser": "backend",
+          "root_selector": "summary",
+          "format": "table",
+          "columns": [
+            {
+              "selector": "peak_host_ram_percent",
+              "text": "Host-RAM-Spitze im Zeitraum",
+              "type": "number"
+            }
+          ]
+        }
+      ],
+      "gridPos": {
+        "x": 16,
+        "y": 64,
+        "w": 8,
+        "h": 4
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "decimals": 2,
+          "noValue": "—",
+          "custom": {}
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "graphMode": "none"
+      },
+      "description": ""
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "Prometheus · veröffentlichte 10-Minuten-Spitzen · Verbindungen",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${prometheus}"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 68,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 0,
+          "min": 0,
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "stepAfter",
+            "lineWidth": 2,
+            "fillOpacity": 15,
+            "showPoints": "never"
+          }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prometheus}"
+          },
+          "expr": "logger_usage_peak_players{environment=~\"$environment\"}",
+          "legendFormat": "{{environment}}",
+          "refId": "A",
+          "range": true,
+          "format": "time_series"
+        }
+      ],
+      "description": "Maximum filtered open game connections in each rolling 10-minute window; sampled about once per second and published every 10 minutes.",
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 6,
+      "type": "timeseries",
+      "title": "Prometheus · veröffentlichte 10-Minuten-Spitzen · Hostlast",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${prometheus}"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 68,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "decimals": 1,
+          "min": 0,
+          "max": 100,
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "stepAfter",
+            "lineWidth": 2,
+            "fillOpacity": 10,
+            "showPoints": "never",
+            "spanNulls": false
+          },
+          "noValue": "—"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prometheus}"
+          },
+          "expr": "logger_usage_peak_cpu_percent{environment=~\"$environment\"} and (time() - logger_usage_last_measurement_timestamp_seconds{environment=~\"$environment\"} < 660)",
+          "legendFormat": "CPU · 1m-Spitze / {{environment}}",
+          "refId": "A",
+          "range": true,
+          "format": "time_series"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prometheus}"
+          },
+          "expr": "logger_usage_peak_memory_percent{environment=~\"$environment\"}",
+          "legendFormat": "RAM / {{environment}}",
+          "refId": "B",
+          "range": true,
+          "format": "time_series"
+        }
+      ],
+      "description": "CPU: höchste einminütige Nicht-Leerlauf-Last in zehn Minuten. RAM: unabhängige Zehn-Minuten-Spitze. CPU-Daten älter als elf Minuten werden ausgeblendet. Historische Werte vor der CPU-Umstellung behalten ihre bisherige Bedeutung.",
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 143,
+      "type": "timeseries",
+      "title": "CPU · 1-Minuten-Mittel und veröffentlichte Spitze",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${prometheus}"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 76,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "decimals": 1,
+          "min": 0,
+          "max": 100,
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "fillOpacity": 10,
+            "showPoints": "never",
+            "spanNulls": false
+          },
+          "noValue": "—"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prometheus}"
+          },
+          "expr": "(100 * (1 - avg by (job, instance) (((rate(node_cpu_seconds_total{instance=~\"$node_instance\",mode=\"idle\"}[1m]) / ignoring (mode) sum without (mode) (rate(node_cpu_seconds_total{instance=~\"$node_instance\",mode!=\"guest\",mode!=\"guest_nice\"}[1m]))) >= 0 <= 1)))) and on (job, instance) (min by (job, instance) (timestamp(node_cpu_seconds_total{instance=~\"$node_instance\",mode=\"idle\"})) > time() - 45) and on (job, instance) (min by (job, instance) (count_over_time(node_cpu_seconds_total{instance=~\"$node_instance\",mode=\"idle\"}[1m])) >= 3) and on (job, instance) (min by (job, instance) (timestamp(node_cpu_seconds_total{instance=~\"$node_instance\",mode=\"idle\"} offset 1m)) > time() - 105) and on (job, instance) (count by (job, instance) (((rate(node_cpu_seconds_total{instance=~\"$node_instance\",mode=\"idle\"}[1m]) / ignoring (mode) sum without (mode) (rate(node_cpu_seconds_total{instance=~\"$node_instance\",mode!=\"guest\",mode!=\"guest_nice\"}[1m]))) >= 0 <= 1)) == count by (job, instance) (node_cpu_seconds_total{instance=~\"$node_instance\",mode=\"idle\"}))",
+          "legendFormat": "1m-Mittel / {{job}} / {{instance}}",
+          "refId": "A",
+          "range": true,
+          "format": "time_series",
+          "interval": "15s"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prometheus}"
+          },
+          "expr": "logger_usage_peak_cpu_percent{environment=~\"$environment\"} and (time() - logger_usage_last_measurement_timestamp_seconds{environment=~\"$environment\"} < 660)",
+          "legendFormat": "10m-Spitze / {{environment}}",
+          "refId": "B",
+          "range": true,
+          "format": "time_series",
+          "interval": "15s"
+        }
+      ],
+      "description": "Nicht-Leerlauf-CPU über alle Kerne, aus Prometheus-Raten mit 15-Sekunden-Scrapes und 1-Minuten-Fenster. Die Spitze wird alle zehn Minuten veröffentlicht. Kurze Bursts werden geglättet; I/O-Wartezeit und Steal sind enthalten. Fehlende Daten bleiben Lücken. CPU-Quelle (VM) separat auswählen; Produktion und Entwicklung können dieselbe VM verwenden.",
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 144,
+      "type": "timeseries",
+      "title": "CPU · I/O-Wartezeit und Steal (1-Minuten-Mittel)",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${prometheus}"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 76,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "decimals": 1,
+          "min": 0,
+          "max": 100,
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "fillOpacity": 10,
+            "showPoints": "never",
+            "spanNulls": false
+          },
+          "noValue": "—"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prometheus}"
+          },
+          "expr": "(100 * avg by (job, instance) (((rate(node_cpu_seconds_total{instance=~\"$node_instance\",mode=\"iowait\"}[1m]) / ignoring (mode) sum without (mode) (rate(node_cpu_seconds_total{instance=~\"$node_instance\",mode!=\"guest\",mode!=\"guest_nice\"}[1m]))) >= 0 <= 1))) and on (job, instance) (min by (job, instance) (timestamp(node_cpu_seconds_total{instance=~\"$node_instance\",mode=\"iowait\"})) > time() - 45) and on (job, instance) (min by (job, instance) (count_over_time(node_cpu_seconds_total{instance=~\"$node_instance\",mode=\"iowait\"}[1m])) >= 3) and on (job, instance) (min by (job, instance) (timestamp(node_cpu_seconds_total{instance=~\"$node_instance\",mode=\"iowait\"} offset 1m)) > time() - 105) and on (job, instance) (count by (job, instance) (((rate(node_cpu_seconds_total{instance=~\"$node_instance\",mode=\"iowait\"}[1m]) / ignoring (mode) sum without (mode) (rate(node_cpu_seconds_total{instance=~\"$node_instance\",mode!=\"guest\",mode!=\"guest_nice\"}[1m]))) >= 0 <= 1)) == count by (job, instance) (node_cpu_seconds_total{instance=~\"$node_instance\",mode=\"iowait\"}))",
+          "legendFormat": "I/O-Wartezeit / {{job}} / {{instance}}",
+          "refId": "A",
+          "range": true,
+          "format": "time_series",
+          "interval": "15s"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prometheus}"
+          },
+          "expr": "(100 * avg by (job, instance) (((rate(node_cpu_seconds_total{instance=~\"$node_instance\",mode=\"steal\"}[1m]) / ignoring (mode) sum without (mode) (rate(node_cpu_seconds_total{instance=~\"$node_instance\",mode!=\"guest\",mode!=\"guest_nice\"}[1m]))) >= 0 <= 1))) and on (job, instance) (min by (job, instance) (timestamp(node_cpu_seconds_total{instance=~\"$node_instance\",mode=\"steal\"})) > time() - 45) and on (job, instance) (min by (job, instance) (count_over_time(node_cpu_seconds_total{instance=~\"$node_instance\",mode=\"steal\"}[1m])) >= 3) and on (job, instance) (min by (job, instance) (timestamp(node_cpu_seconds_total{instance=~\"$node_instance\",mode=\"steal\"} offset 1m)) > time() - 105) and on (job, instance) (count by (job, instance) (((rate(node_cpu_seconds_total{instance=~\"$node_instance\",mode=\"steal\"}[1m]) / ignoring (mode) sum without (mode) (rate(node_cpu_seconds_total{instance=~\"$node_instance\",mode!=\"guest\",mode!=\"guest_nice\"}[1m]))) >= 0 <= 1)) == count by (job, instance) (node_cpu_seconds_total{instance=~\"$node_instance\",mode=\"steal\"}))",
+          "legendFormat": "Steal / {{job}} / {{instance}}",
+          "refId": "B",
+          "range": true,
+          "format": "time_series",
+          "interval": "15s"
+        }
+      ],
+      "description": "Separate Anteile der Nicht-Leerlauf-Zeit: I/O-Wartezeit zeigt Warten auf I/O; Steal zeigt vom Hypervisor vorenthaltene CPU-Zeit. Fehlende Daten werden nicht als null dargestellt. CPU-Quelle (VM) separat auswählen; Produktion und Entwicklung können dieselbe VM verwenden.",
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    }
+  ],
+  "tags": [
+    "Lean4Game",
+    "Logger"
+  ],
+  "annotations": {
+    "list": []
+  }
+}

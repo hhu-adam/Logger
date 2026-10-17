@@ -9,6 +9,7 @@ from __future__ import annotations
 from contextlib import contextmanager
 from datetime import datetime, timezone
 import json
+import math
 from pathlib import Path
 from time import monotonic, time
 from typing import Any, Iterator
@@ -72,7 +73,7 @@ class LoggerMetrics:
         )
         self.usage_peak_cpu = Gauge(
             "logger_usage_peak_cpu_percent",
-            "Peak host CPU usage in the current measurement window, as a percentage.",
+            "Peak one-minute host non-idle CPU percentage in the last ten minutes.",
             registry=registry,
         )
         self.usage_peak_memory = Gauge(
@@ -85,6 +86,13 @@ class LoggerMetrics:
             "Unix timestamp of the latest Logger usage measurement.",
             registry=registry,
         )
+        self.usage_cpu_last_success = Gauge(
+            "logger_usage_cpu_last_success_timestamp_seconds",
+            "Unix timestamp of the latest usage measurement with valid CPU data.",
+            registry=registry,
+        )
+        # Until the first measurement, CPU usage is unknown rather than zero.
+        self.usage_peak_cpu.set(math.nan)
 
         self.lifecycle_counts = Gauge(
             "logger_game_lifecycle_games",
@@ -181,10 +189,14 @@ class LoggerMetrics:
             return
         latest = measurement.iloc[-1]
         self.usage_peak_players.set(float(latest["Max_usr"]))
-        self.usage_peak_cpu.set(float(latest["Max_cpu"]))
+        cpu = float(latest["Max_cpu"])
+        valid_cpu = math.isfinite(cpu) and 0 <= cpu <= 100
+        self.usage_peak_cpu.set(cpu if valid_cpu else math.nan)
         self.usage_peak_memory.set(float(latest["Max_mem"]))
         timestamp = _timestamp_seconds(str(latest["Timestamp"]))
         self.usage_measurement.set(timestamp if timestamp is not None else time())
+        if valid_cpu:
+            self.usage_cpu_last_success.set(timestamp if timestamp is not None else time())
 
     def record_activity_report(self, report: dict[str, Any]) -> None:
         """Publish the current state and timeline of each game."""

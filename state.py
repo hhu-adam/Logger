@@ -16,5 +16,8 @@ class State:
 
         self.sec_by_sec_user_count: pandas.DataFrame = pandas.DataFrame({"Timestamp": [],
                                                                 "Users": []})
+
+        self.reporting_location_period_start = None
+        self.reporting_last_location_measurement = None
         
 state = State()

@@ -47,13 +47,16 @@ class UsageMeter:
         # self.API = os.environ.get("API")
         #self.HARDWARE_SCRIPT = os.environ.get("HARDWARE_SCRIPT")
         self.hardware_info_file = os.environ.get("HARDWARE_INFO_FILE")
-        self.prom_con = PrometheusConnect(url="http://localhost:9090", disable_ssl=True)
-        # Zero-initialize list of 40 15-sec idle measurements
-        # this list corresponds to all idle percentages over the 
-        # last ten minutes.
-        #self.cpu_idle_percentages = [0.0]*40
-        #self.old_avg_idle_time = 0.0
-        self.cpu_meter = CpuMeter(prometheus_connection=self.prom_con)
+        self.prom_con = PrometheusConnect(
+            url=os.getenv("PROMETHEUS_URL", "http://localhost:9090"),
+            disable_ssl=True,
+            timeout=10,
+        )
+        self.cpu_meter = CpuMeter(
+            prometheus_connection=self.prom_con,
+            job=os.getenv("PROMETHEUS_NODE_JOB", ""),
+            instance=os.getenv("PROMETHEUS_NODE_INSTANCE", ""),
+        )
         self.ram_meter = RamMeter(prometheus_connection=self.prom_con)
         self.loc_meter = LocationMeter()
             
@@ -64,9 +67,6 @@ class UsageMeter:
         print(f"[{datetime.datetime.now()}] Updated user-hardware log.")
         return pandas.concat([doc_measurements, result])
 
-    def update_cpu_measurement(self):
-        self.cpu_meter.update_cpu_idle_percentages()
-    
     def update_usr_measurement(self):
         self.loc_meter.update_sec_by_sec_measurements()
     

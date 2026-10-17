@@ -50,18 +50,26 @@ if ACTIVITY_REFRESH_INTERVAL_MIN < 1:
 
 @repeat(every(MEASURING_INTERVAL_SEC).seconds)
 def measuring_job_users():
-    with metrics.observe_job("session_measurement"):
-        use_meter.update_usr_measurement()
+    try:
+        with metrics.observe_job("session_measurement"):
+            use_meter.update_usr_measurement()
+    except Exception as error:
+        # A restarting Relay must not discard this process's daily observations.
+        # The next scheduled attempt retries without recording a zero sample.
+        print(f"[{datetime.now()}] - Session measurement failed: {error}", file=sys.stderr)
 
 @repeat(every(MEASURING_INTERVAL_MIN).minutes)
 def measuring_job_player_retention():
-    with metrics.observe_job("game_usage_measurement"):
-        with data_lock:
-            state.daily_game_user_log = use_meter.update_loc_measurement(state.daily_game_user_log)
-            measured_at = datetime.now(timezone.utc)
-            if state.reporting_location_period_start is None:
-                state.reporting_location_period_start = measured_at.date().isoformat()
-            state.reporting_last_location_measurement = measured_at.isoformat()
+    try:
+        with metrics.observe_job("game_usage_measurement"):
+            with data_lock:
+                state.daily_game_user_log = use_meter.update_loc_measurement(state.daily_game_user_log)
+                measured_at = datetime.now(timezone.utc)
+                if state.reporting_location_period_start is None:
+                    state.reporting_location_period_start = measured_at.date().isoformat()
+                state.reporting_last_location_measurement = measured_at.isoformat()
+    except Exception as error:
+        print(f"[{datetime.now()}] - Game usage measurement failed: {error}", file=sys.stderr)
 
 @repeat(every(MEASURING_INTERVAL_MIN).minutes)
 def measuring_job_maximum_usage():

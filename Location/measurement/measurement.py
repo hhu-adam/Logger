@@ -111,7 +111,7 @@ class LocationMeter():
         return os.stat(doc_measurements_path).st_size == 0
 
 
-    def get_measurement(self) -> dict | None:
+    def get_measurement(self) -> dict:
         """
         Calls API to receive information about current game
         session measurements
@@ -120,12 +120,11 @@ class LocationMeter():
         assert self.API is not None, "[LocationMeter] Could not retrive env-var API!"
         assert len(self.API) != 0, "API string is empty!"
 
-        response = requests.get(self.API, timeout=2000)
-        
-        if response.status_code != 200:
-            print('API call for open game sessions failed.', file=sys.stderr)
-            return
-        
+        # Keep the single-threaded scheduler responsive during a Relay outage.
+        # Failed requests propagate to the job guards, which retain existing data.
+        response = requests.get(self.API, timeout=(2, 5))
+        response.raise_for_status()
+
         return response.json()
 
     def measure_access_sec_by_sec(self) -> pandas.DataFrame:
@@ -183,7 +182,11 @@ class LocationMeter():
         #print(recent_df)
         #print("PULL MAX. FROM FOLLOWING MEASUREMENTS:")
         #print(self.sec_by_sec_measurement)
-        return self.sec_by_sec_measurement['Users'].max()
+        samples = self.sec_by_sec_measurement
+        recent = samples['Timestamp'] >= pandas.Timestamp.now() - pandas.Timedelta(minutes=10)
+        # Failed sampling must not keep an old peak alive indefinitely. Ignore
+        # the -1 startup placeholders; an empty window is unknown, not zero.
+        return samples.loc[recent & (samples['Users'] >= 0), 'Users'].max()
 
     def measure_access(self, doc_df: pandas.DataFrame) -> pandas.DataFrame:
         """
